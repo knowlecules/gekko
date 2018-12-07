@@ -328,7 +328,7 @@ class StickyOrder extends BaseOrder {
 
   // global error handler
   handleError(error) {
-    if(!error) {
+    if(!error || error.message.indexOf("insufficient") >= 0 ) {
       return false;
     }
 

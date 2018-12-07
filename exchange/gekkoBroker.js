@@ -81,7 +81,7 @@ class Broker {
   }
 
   sync(callback) {
-    if(!this.private) {
+    if(!this.config.private) {
       this.setTicker();
       return;
     }
