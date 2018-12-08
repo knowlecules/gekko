@@ -10,7 +10,7 @@
             "name": "Debug Program",
             "program": "${workspaceFolder}\\gekko",
             "args": [
-                "--config", "config_BTC_USDT.js"
+                "--config", "config_binance_consolidate.js"
             ]
         },
         {

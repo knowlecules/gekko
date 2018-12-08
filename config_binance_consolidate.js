@@ -3,7 +3,7 @@
 
 var config = {};
 
-const {key, secret, username} = require("./SECRET-api-keys.json");
+const {tradeAccounts} = require("./SECRET-api-keys.json");
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //                          GENERAL SETTINGS
@@ -16,6 +16,7 @@ config.debug = true; // for additional logging / debugging
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 config.watch = {
+  enabled: false,
 
   // see https://gekko.wizb.it/docs/introduction/supported_exchanges.html
   exchange: 'binance',
@@ -34,7 +35,7 @@ config.watch = {
 
 config.tradingAdvisor = {
   enabled: true,
-  method: 'always-sell',
+  method: 'consolidate',
   candleSize: 1,
   historySize: 1,
 }
@@ -92,9 +93,9 @@ config.performanceAnalyzer = {
 // watched by `config.watch`.
 config.trader = {
   enabled: false,
-  key,
-  secret,
-  username, // your username, only required for specific exchanges.
+  key : "",
+  secret : "",
+  username : "", // your username, only required for specific exchanges.
   passphrase: '', // GDAX, requires a passphrase.
 }
 
@@ -474,8 +475,11 @@ config.StochRSI = {
 
 
 // custom settings:
-config["always-sell"] = {
-
+config.consolidate = {
+  currency :"USDT",
+  exchange:"binance",
+  assets: ["BTC","BCHABC","LTC"],
+  tradeAccounts, 
 }
 
 // custom settings:
