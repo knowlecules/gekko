@@ -338,8 +338,8 @@
         "BTC"
       ],
       "minimalOrder": {
-        "amount": 0.000001,
-        "price": 0.01,
+        "amount": 0.0001,
+        "price": 1000,
         "order": 10
       }
     },
@@ -1065,7 +1065,7 @@
       ],
       "minimalOrder": {
         "amount": 0.00001,
-        "price": 0.01,
+        "price": 10,
         "order": 10
       }
     },
@@ -1075,7 +1075,7 @@
         "BCHABC"
       ],
       "minimalOrder": {
-        "amount": 0.00001,
+        "amount": 0.001,
         "price": 0.01,
         "order": 10
       }
@@ -2351,8 +2351,8 @@
         "LTC"
       ],
       "minimalOrder": {
-        "amount": 0.00001,
-        "price": 0.01,
+        "amount": 0.01,
+        "price": 10,
         "order": 10
       }
     },
