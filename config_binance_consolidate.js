@@ -36,8 +36,8 @@ config.watch = {
 config.tradingAdvisor = {
   enabled: true,
   method: 'consolidate',
-  candleSize: 1,
-  historySize: 1,
+  candleSize: 15,
+  historySize: 2,
 }
 
 // MACD settings:
@@ -248,11 +248,12 @@ config.redisBeacon = {
 }
 
 config.slack = {
-  enabled: false,
-  token: '',
+  enabled: true,
+  token: 'xoxp-480090074706-480090075042-500094504263-6fa33578d7eea353643d73fa0567436e',
   sendMessageOnStart: true,
   muteSoft: true,
-  channel: '' // #tradebot
+  emitTrades: true,
+  channel: '#gekko' // #tradebot
 }
 
 config.ifttt = {
@@ -479,7 +480,8 @@ config.consolidate = {
   currency :"USDT",
   exchange:"binance",
   assets: ["BTC","BCHABC","LTC"],
-  tradeAccounts, 
+  tradeAccounts,
+  upTrendSell:true, 
 }
 
 // custom settings:
