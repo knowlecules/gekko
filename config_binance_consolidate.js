@@ -3,7 +3,7 @@
 
 var config = {};
 
-const {tradeAccounts, token} = require("./SECRET-api-keys.json");
+const {tradeAccounts, slack} = require("./SECRET-api-keys.json");
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //                          GENERAL SETTINGS
@@ -250,7 +250,7 @@ config.redisBeacon = {
 
 config.slack = {
   enabled: true,
-  token,
+  token: slack.token,
   sendMessageOnStart: true,
   muteSoft: true,
   emitTrades: true,
