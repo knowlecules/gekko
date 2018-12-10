@@ -110,7 +110,7 @@ strat.update = function(candle) {
       console.log(`${client}:  Filled ${tradingText}.`);
     });
     order.on('completed', () => {
-      order.createSummary(summary => console.log(summary));
+      order.createSummary((err, summary) => console.log(summary));
     });
 
     trader.sync(console.log);  

@@ -3,7 +3,7 @@
 
 var config = {};
 
-const {tradeAccounts} = require("./SECRET-api-keys.json");
+const {tradeAccounts, token} = require("./SECRET-api-keys.json");
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //                          GENERAL SETTINGS
@@ -36,6 +36,7 @@ config.watch = {
 config.tradingAdvisor = {
   enabled: true,
   method: 'consolidate',
+  // Set to 15 minutes when delaying 
   candleSize: 15,
   historySize: 2,
 }
@@ -249,11 +250,11 @@ config.redisBeacon = {
 
 config.slack = {
   enabled: true,
-  token: 'xoxp-480090074706-480090075042-500094504263-6fa33578d7eea353643d73fa0567436e',
+  token,
   sendMessageOnStart: true,
   muteSoft: true,
   emitTrades: true,
-  channel: '#gekko' // #tradebot
+  channel: '#trading' // #tradebot
 }
 
 config.ifttt = {
