@@ -90,7 +90,7 @@ class Broker {
       throw new errors.ExchangeError(this.cantTrade());
     }
 
-    this.syncPrivateData();
+    this.syncPrivateData(callback);
   }
 
   syncPrivateData(callback) {
