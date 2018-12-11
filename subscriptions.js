@@ -45,27 +45,27 @@ var subscriptions = [
     handler: 'processStratNotification'
   },
   {
-    emitter: ['trader', 'paperTrader','slack'],
+    emitter: ['trader', 'paperTrader'],
     event: 'tradeInitiated',
     handler: 'processTradeInitiated'
   },
   {
-    emitter: ['trader', 'paperTrader','slack'],
+    emitter: ['trader', 'paperTrader'],
     event: 'tradeAborted',
     handler: 'processTradeAborted'
   },
   {
-    emitter: ['trader', 'paperTrader','slack'],
+    emitter: ['trader', 'paperTrader'],
     event: 'tradeCompleted',
     handler: 'processTradeCompleted'
   },
   {
-    emitter: ['trader','slack'],
+    emitter: ['trader'],
     event: 'tradeCancelled',
     handler: 'processTradeCancelled'
   },
   {
-    emitter: ['trader','slack'],
+    emitter: ['trader'],
     event: 'tradeErrored',
     handler: 'processTradeErrored'
   },
