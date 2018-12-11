@@ -13,10 +13,9 @@ var log = require('../core/log');
 const Broker = require('../exchange/GekkoBroker');
 const states = require('../exchange/orders/states');
 
-
 // Let's create our own strat
 var strat = {};
-let traders = [];
+let accounts = {};
 
 // Prepare everything our method needs
 strat.init = function() {
@@ -26,10 +25,10 @@ strat.init = function() {
   this.requiredHistory = 1;
   this.upTrendSell = upTrendSell;
   tradeAccounts.forEach((account) => {
-    const {key, secret, client, username} = account;
+    const {key, secret, username} = account;
 
     assets.forEach((asset) => {
-      let trader = new Broker({
+      let broker = new Broker({
         currency,  
         asset,  
         exchange, 
@@ -39,10 +38,10 @@ strat.init = function() {
         passphrase: 'z',
         customInterval:100
       });
-      traders.push(trader);
-      trader.sync(console.log); 
-      trader.client = client;
-      trader.username = username;  
+      if (!accounts[username]) {
+        accounts[username] = {account, brokers: []};
+      }
+      accounts[username].brokers.push(broker);
     })    
   })    
 }
@@ -51,8 +50,14 @@ let marketHistory = {lastCandle: null, upCount: 0, sell:false};
 // What happens on every new candle?
 strat.update = function(candle) {
 
-  // Using candles to wait for a sellers market. Essentially more than 2 increases in a row.
+  // Configure to default to skip market check and always sell
+  let candleParts = {...candle};
+  delete(candleParts.start)
+  delete(candleParts.trades)
+  console.log("Candle", candleParts);
   marketHistory.sell = this.upTrendSell;
+
+  // Using candles to wait for a sellers market. Essentially more than 2 increases in a row.
   if (!marketHistory.lastCandle) {
     marketHistory.lastCandle = candle;
   } else if (marketHistory.lastCandle.vwp >  candle.vwp) {
@@ -63,62 +68,77 @@ strat.update = function(candle) {
     }
     marketHistory.upCount = 0
   }
-
-  function validateLimit(ask, bid, minimalLimit) {
+  
+  // Make sure that the limit is not too low. Not much good when "sticky" trade
+  function verifyLimit(ask, bid, minimalLimit) {
     if (!marketHistory.sell) {
       return false;
     }
     return ask > minimalLimit ? ask : false;    
   }
 
-  function traderUpdate(trader) {
-    if (!Array.isArray(trader.portfolio.balances) || !trader.ticker) {
+  // If the balance is big enough then the trade is made
+  function balanceCheck(account, broker) {
+    if (!Array.isArray(broker.portfolio.balances) || !broker.ticker) {
       return true;
     }
-    const client = trader.client;
-    const {asset, currency} = trader.config;
-    const {minimalOrder} = trader.marketConfig
-    let {amount} = trader.portfolio.balances.find(el => el.name === asset);
+    const {client} = account;
+    const {asset, currency} = broker.config;
+    const {minimalOrder} = broker.marketConfig
+    let {amount} = broker.portfolio.balances.find(el => el.name === asset);
 
     log.debug(`${client}: Trade check ${amount.toFixed(3)} ${asset} for ${currency}.`);
     if (amount < (minimalOrder.amount * 100)) {
       return true;
     }
-    const fee = amount * trader.portfolio.fee;
+
+    const fee = amount * broker.portfolio.fee;
     const sell = (amount - fee);
     const type = 'sticky';
     const side = 'sell';
-    const {ask, bid} = trader.ticker;
-    const limit = validateLimit(ask, bid, minimalOrder.price);
+    const {ask, bid} = broker.ticker;
+    const limit = verifyLimit(ask, bid, minimalOrder.price);
     
     if (!limit) {
       return;
     }
+
     const tradingText = `${sell.toFixed(3)} ${asset} for ${currency}`
     log.debug(`${client}: Trading ${tradingText}, asking ${ask}. Current bid is ${bid}`);
-    const order = trader.createOrder(type, side, sell, { limit });
+    const order = broker.createOrder(type, side, sell, { limit });
     order.on('statusChange', (status) => {
-      if (status == states.OPEN && !trader.synced) {
-        // Get latest balance to avoid re-attempts
-        trader.sync(console.log);
-        trader.synced = false;
-      }
+      broker.activeTradingState = status;
       console.log(`${client}: Order ${tradingText}. Status changed:[${status}]`);
     });
     order.on('filled', result => {
-      trader.synced = false;
       console.log(`${client}:  Filled ${tradingText}.`);
     });
     order.on('completed', () => {
       order.createSummary((err, summary) => console.log(summary));
     });
 
-    trader.sync(console.log);  
   }  
 
-  traders.forEach((trader) => {
-    traderUpdate(trader);
-  });
+  // To make sure we only open one order at a time for the same currency pair
+  function hasActiveTrade(trader) {
+    const status = trader.activeTradingState;
+    return (status == states.OPEN || status == states.MOVING || status == states.INITIALIZING|| status == states.SUBMITTED);
+  } 
+
+  Object.entries(accounts).forEach(([username, brokerList]) => {
+    const {account, brokers} = brokerList;
+    if(!account.syncing && brokers[0]) {
+      account.syncing = true;
+      brokers.forEach((broker) => {
+        broker.sync(() => {
+          if (!hasActiveTrade(broker)) {
+            balanceCheck(account, broker);
+          }
+          account.syncing = false;
+        })
+      });
+    }
+  });  
 }
 
 // For debugging purposes.
