@@ -19,11 +19,15 @@ let accounts = {};
 
 // Prepare everything our method needs
 strat.init = function() {
-  const {currency, exchange, assets, tradeAccounts, upTrendSell} = this.settings;
+  const {currency, exchange, assets, tradeAccounts, sellOnly, longTrendCount, shortTrendCount} = this.settings;
   this.input = 'candle';
   this.currentTrend = 'short';
   this.requiredHistory = 1;
-  this.upTrendSell = upTrendSell;
+  this.sellOnly = sellOnly;
+  this.shortTrendCount = shortTrendCount;
+  this.longTrendCount = longTrendCount;
+  this.marketHistory = {lastCandle: null, bullCount: 0, bearCount: 0, advice:false};
+
   tradeAccounts.forEach((account) => {
     const {key, secret, username} = account;
 
@@ -46,32 +50,61 @@ strat.init = function() {
   })    
 }
 
-let marketHistory = {lastCandle: null, upCount: 0, sell:false};
+function prettyObject(obj) {
+  return JSON.stringify(obj, null, 4).replace(/(^\S*\n|\n*\S*$)/g,'').replace(/"\s*\:\s*"?/g," = ").replace(/"/g,"").replace(/,\n/g,"\n")
+}
+
 // What happens on every new candle?
 strat.update = function(candle) {
 
   // Configure to default to skip market check and always sell
-  let candleParts = {...candle};
-  delete(candleParts.start)
-  delete(candleParts.trades)
-  console.log("Candle", candleParts);
-  marketHistory.sell = this.upTrendSell;
+  // this.notify("Candle:\n" + prettyObject(candle));
 
   // Using candles to wait for a sellers market. Essentially more than 2 increases in a row.
-  if (!marketHistory.lastCandle) {
-    marketHistory.lastCandle = candle;
-  } else if (marketHistory.lastCandle.vwp >  candle.vwp) {
-    marketHistory.upCount ++;
-  } else {
-    if (marketHistory.upCount > 2) {
-      marketHistory.sell = true;
+  this.marketHistory.lastCandle = candle;
+  this.marketHistory.advice = false;
+  const isBearMarket =  candle.open > candle.close;
+  if (isBearMarket) {
+    // Switched from bull market of at least 3 candles
+    if (this.marketHistory.bullCount > this.longTrendCount) {
+      this.marketHistory.advice = 'short';
     }
-    marketHistory.upCount = 0
+    this.marketHistory.bullCount = 1;
+    this.marketHistory.bearCount += 1;
+  } else {
+    // Switched from bear market of at least 3 candles 
+    if (this.marketHistory.bearCount > this.shortTrendCount) {
+      this.marketHistory.advice = 'long';
+    }
+    this.marketHistory.bearCount = 1;
+    this.marketHistory.bullCount += 1;
   }
-  
+
+  log.debug("Market tracking", this.marketHistory);
+}
+
+// For debugging purposes.
+strat.log = function() {}
+
+// Based on the newly calculated
+// information, check if we should
+// update or not.
+strat.check = function() {
+  var self = this;
+  if (this.marketHistory.advice) {
+    this.advice(this.marketHistory.advice);
+  } else {
+    return;
+  }
+
+  // Only selling 
+  if (this.sellOnly && this.marketHistory.advice === "long") {
+    return;
+  }
+
   // Make sure that the limit is not too low. Not much good when "sticky" trade
   function verifyLimit(ask, bid, minimalLimit) {
-    if (!marketHistory.sell) {
+    if (!this.marketHistory.sell) {
       return false;
     }
     return ask > minimalLimit ? ask : false;    
@@ -104,6 +137,7 @@ strat.update = function(candle) {
     }
 
     const tradingText = `${sell.toFixed(3)} ${asset} for ${currency}`
+    self.notify(`${client}. Trading ${tradingText}, asking ${ask}. Current bid is ${bid}`);
     log.debug(`${client}: Trading ${tradingText}, asking ${ask}. Current bid is ${bid}`);
     const order = broker.createOrder(type, side, sell, { limit });
     order.on('statusChange', (status) => {
@@ -114,9 +148,11 @@ strat.update = function(candle) {
       console.log(`${client}:  Filled ${tradingText}.`);
     });
     order.on('completed', () => {
-      order.createSummary((err, summary) => console.log(summary));
+      order.createSummary((err, summary) => {
+        console.log(summary);
+        self.notify("Order completed summary:\n" + prettyObject(summary));
+      });
     });
-
   }  
 
   // To make sure we only open one order at a time for the same currency pair
@@ -138,26 +174,7 @@ strat.update = function(candle) {
         })
       });
     }
-  });  
-}
-
-// For debugging purposes.
-strat.log = function() {
-  if (this.createdOrder){
-    log.debug('Order opened to sell all.');
-  }
-}
-
-// Based on the newly calculated
-// information, check if we should
-// update or not.
-strat.check = function() {
-
-  if(this.hasZeroBalance) {
-    this.advice('long');
-  } else {
-    this.advice('short');
-  }
+  }); 
 }
 
 module.exports = strat;
