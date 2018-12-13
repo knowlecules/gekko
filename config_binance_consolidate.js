@@ -38,7 +38,7 @@ config.tradingAdvisor = {
   method: 'consolidate',
   // Set to 15 minutes when delaying for sellers market. 
   // Otherwise less than 5 to closely follow the curve.
-  candleSize: 1,
+  candleSize: 15,
   historySize: 1,
 }
 

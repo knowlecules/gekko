@@ -71,18 +71,18 @@ strat.update = function(candle) {
     if (this.marketHistory.bullCount > this.longTrendCount) {
       this.marketHistory.advice = 'short';
     }
-    this.marketHistory.bullCount = 1;
+    this.marketHistory.bullCount = 0;
     this.marketHistory.bearCount += 1;
   } else {
     // Switched from bear market of at least 3 candles 
     if (this.marketHistory.bearCount > this.shortTrendCount) {
       this.marketHistory.advice = 'long';
     }
-    this.marketHistory.bearCount = 1;
+    this.marketHistory.bearCount = 0;
     this.marketHistory.bullCount += 1;
   }
 
-  log.debug("Market tracking:\n" + prettyObject(this.marketHistory));
+  log.debug("Market tracking:" + JSON.stringify(this.marketHistory));
 }
 
 // For debugging purposes.
