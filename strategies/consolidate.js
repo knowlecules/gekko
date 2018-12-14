@@ -19,11 +19,11 @@ let accounts = {};
 
 // Prepare everything our method needs
 strat.init = function() {
-  const {currency, exchange, assets, tradeAccounts, sellOnly, longTrendCount, shortTrendCount} = this.settings;
+  const {currency, exchange, assets, tradeAccounts, instantLiquidation, longTrendCount, shortTrendCount} = this.settings;
   this.input = 'candle';
   this.currentTrend = 'short';
   this.requiredHistory = 1;
-  this.sellOnly = sellOnly;
+  this.instantLiquidation = instantLiquidation;
   this.shortTrendCount = shortTrendCount;
   this.longTrendCount = longTrendCount;
   this.marketHistory = {bullCount: 0, bearCount: 0, advice:false};
@@ -95,10 +95,11 @@ strat.check = function() {
 
   // Make sure that the limit is not too low. Not much good when "sticky" trade
   function verifyLimit(ask, bid, minimalLimit) {
-    if (!this.marketHistory.sell) {
-      return false;
+    // Place holder for more extensive liquidation timing
+    if (self.instantLiquidation || self.marketHistory.advice === "long") {
+      return ask > minimalLimit ? ask : false;    
     }
-    return ask > minimalLimit ? ask : false;    
+    return false;
   }
 
   // If the balance is big enough then the trade is made
@@ -157,24 +158,23 @@ strat.check = function() {
   var self = this;
   if (this.marketHistory.advice) {
     this.advice(this.marketHistory.advice);
-
-    // Only selling 
-    if (!this.sellOnly || this.marketHistory.advice === "long") {
-      Object.entries(accounts).forEach(([username, brokerList]) => {
-        const {account, brokers} = brokerList;
-        if(!account.syncing && brokers[0]) {
-          account.syncing = true;
-          brokers.forEach((broker) => {
-            broker.sync(() => {
-              if (!hasActiveTrade(broker)) {
-                orderOnLiquid(account, broker);
-              }
-              account.syncing = false;
-            })
-          });
-        }
-      }); 
-    }
+  }
+  
+  if (this.marketHistory.advice || this.instantLiquidation) {
+    Object.entries(accounts).forEach(([username, brokerList]) => {
+      const {account, brokers} = brokerList;
+      if(!account.syncing && brokers[0]) {
+        account.syncing = true;
+        brokers.forEach((broker) => {
+          broker.sync(() => {
+            if (!hasActiveTrade(broker)) {
+              orderOnLiquid(account, broker);
+            }
+            account.syncing = false;
+          })
+        });
+      }
+    }); 
   }
 }
 

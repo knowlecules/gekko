@@ -2,6 +2,6 @@
   exchange = "binance" 
   assets = ["BTC"] 
   tradeAccounts = []
-  sellOnly = false
+  instantLiquidation = false
   longTrendCount = 2
   shortTrendCount = 2

@@ -48,9 +48,11 @@ config.consolidate = {
   exchange:"binance",
   assets: ["BTC","BCHABC","LTC"],
   tradeAccounts,
-  sellOnly: true, 
-  longTrendCount:2,
-  shortTrendCount:4,
+  instantLiquidation: true, 
+  // Set to 2 when waiting for buyers market and candlesize is 15. Otherwise 1
+  longTrendCount:1,
+  // Set to 4 when waiting for sellers market and candlesize is 15. Otherwise 1
+  shortTrendCount:1,
 }
 
 // MACD settings:
