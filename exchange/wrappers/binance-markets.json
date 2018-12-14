@@ -2351,7 +2351,7 @@
         "LTC"
       ],
       "minimalOrder": {
-        "amount": 0.01,
+        "amount": 0.005,
         "price": 10,
         "order": 10
       }
