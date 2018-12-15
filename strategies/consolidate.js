@@ -156,7 +156,8 @@ strat.check = function() {
   } 
 
   var self = this;
-  if (this.marketHistory.advice) {
+  // Only show advice when running the strategy
+  if (this.marketHistory.advice && !this.instantLiquidation) {
     this.advice(this.marketHistory.advice);
   }
   
