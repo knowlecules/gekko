@@ -169,8 +169,8 @@ strat.check = function() {
         brokers.forEach((broker) => {
           broker.sync((data, err) => {
             account.syncing = false;
-            if (err) {
-              console.error("Error during broker.sync for:", broker, err);
+            if (err && err.message) {
+              console.error("Error during broker.sync for:",account, broker.market, err.message);
               self.notify("Unable to sync account:" + account.client);
             }
 
