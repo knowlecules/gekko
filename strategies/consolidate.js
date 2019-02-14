@@ -27,6 +27,7 @@ strat.init = function() {
   this.shortTrendCount = shortTrendCount;
   this.longTrendCount = longTrendCount;
   this.marketHistory = {bullCount: 0, bearCount: 0, advice:false};
+  this.priorCandle = null;
 
   tradeAccounts.forEach((account) => {
     const {key, secret, username} = account;
@@ -63,9 +64,26 @@ strat.update = function(candle) {
     log.debug("Candle:\n" + prettyObject(candle));
   }
 
+  if (!this.priorCandle) {
+    this.priorCandle = candle;
+    return;
+  }
+
+  var trackCandle = true;
+  if (this.instantLiquidation) {
+    var priorTime = new Date(this.priorCandle.start);
+    var thisTime = new Date(candle.start); 
+    //Default 15 minutes
+    trackCandle = thisTime-priorTime >= 15*60*1000;
+  }
+
+  if (!trackCandle) {
+    return;
+  }
+
   // Using candles to wait for a sellers market. Essentially more than 2 increases in a row.
   this.marketHistory.advice = false;
-  const isBearMarket =  candle.open > candle.close;
+  const isBearMarket =  this.priorCandle.open > candle.close;
   if (isBearMarket) {
     // Switched from bull market of at least 3 candles
     if (this.marketHistory.bullCount > this.longTrendCount) {
@@ -81,8 +99,8 @@ strat.update = function(candle) {
     this.marketHistory.bearCount = 0;
     this.marketHistory.bullCount += 1;
   }
-
-  log.debug("Market tracking:" + JSON.stringify(this.marketHistory), ", open: " + candle.open + ", close: " + candle.close + ", difference: " + parseInt((candle.close-candle.open)*100,10)/100 + ", rate: " + parseInt((candle.close-candle.open)*1000/candle.close,10)/1000 + "% ");
+  log.debug("Market tracking:" + JSON.stringify(this.marketHistory), ", open: " + this.priorCandle.open + ", close: " + candle.close + ", difference: " + parseInt((candle.close-this.priorCandle.open)*100,10)/100 + ", rate: " + parseInt((candle.close-this.priorCandle.open)*1000/candle.close,10)/1000 + "% ");
+  this.priorCandle =  candle;
 }
 
 // For debugging purposes.
