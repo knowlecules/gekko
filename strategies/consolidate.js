@@ -82,7 +82,7 @@ strat.update = function(candle) {
     this.marketHistory.bullCount += 1;
   }
 
-  log.debug("Market tracking:" + JSON.stringify(this.marketHistory), ", open: " + candle.open + ", close: " + candle.open + ", difference: " + parseInt((candle.close-candle.open)*100,10)/100 + ", rate: " + parseInt((candle.close-candle.open)*100/candle.close,10)/100 + "% ");
+  log.debug("Market tracking:" + JSON.stringify(this.marketHistory), ", open: " + candle.open + ", close: " + candle.open + ", difference: " + parseInt((candle.close-candle.open)*100,10)/100 + ", rate: " + parseInt((candle.close-candle.open)*1000/candle.close,10)/1000 + "% ");
 }
 
 // For debugging purposes.
