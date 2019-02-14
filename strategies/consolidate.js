@@ -82,7 +82,7 @@ strat.update = function(candle) {
     this.marketHistory.bullCount += 1;
   }
 
-  log.debug("Market tracking:" + JSON.stringify(this.marketHistory));
+  log.debug("Market tracking:" + JSON.stringify(this.marketHistory), ", open:" + candle.open + ", close" + candle.close);
 }
 
 // For debugging purposes.
