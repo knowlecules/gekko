@@ -167,11 +167,15 @@ strat.check = function() {
       if(!account.syncing && brokers[0]) {
         account.syncing = true;
         brokers.forEach((broker) => {
-          broker.sync(() => {
+          broker.sync((data, err) => {
+            account.syncing = false;
+            if (err) {
+              self.notify("Unable to sync account:" + account.client);
+            }
+
             if (!hasActiveTrade(broker)) {
               orderOnLiquid(account, broker);
             }
-            account.syncing = false;
           })
         });
       }
