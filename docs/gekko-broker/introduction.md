@@ -56,7 +56,7 @@ Set up a Gekko Broker instance:
 
     // from the gekko repo (make sure you have deps installed
     // inside the exchange folder).
-    const Broker = require('../gekko/exchange/GekkoBroker');
+    const Broker = require('../gekko/exchange/gekkoBroker');
     // or from NPM
     // const Broker = require('gekko-broker');
 

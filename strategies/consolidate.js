@@ -10,7 +10,7 @@
 
 var log = require('../core/log');
 
-const Broker = require('../exchange/GekkoBroker');
+const Broker = require('../exchange/gekkoBroker');
 const states = require('../exchange/orders/states');
 
 // Let's create our own strat
