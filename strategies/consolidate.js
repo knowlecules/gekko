@@ -99,7 +99,9 @@ strat.update = function(candle) {
     this.marketHistory.bearCount = 0;
     this.marketHistory.bullCount += 1;
   }
-  log.debug("Market tracking:" + JSON.stringify(this.marketHistory), ", open: " + this.priorCandle.open + ", close: " + candle.close + ", difference: " + parseInt((candle.close-this.priorCandle.open)*100,10)/100 + ", rate: " + parseInt((candle.close-this.priorCandle.open)*10000/candle.close,10)/100 + "% ");
+  let logMsg = `Market watch: ${prettyObject(this.marketHistory)}, open: ${this.priorCandle.open}, close: ${candle.close}, difference: ${parseInt((candle.close-this.priorCandle.open)*100,10)/100}, rate: ${parseInt((candle.close-this.priorCandle.open)*10000/candle.close,10)/100}%`;
+  log.debug(logMsg);
+  this.notify(logMsg);
   this.priorCandle =  candle;
 }
 
