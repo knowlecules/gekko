@@ -116,10 +116,10 @@ strat.check = function() {
   // Make sure that the limit is not too low. Not much good when "sticky" trade
   function verifyLimit(ask, bid, minimalLimit) {
     // Place holder for more extensive liquidation timing
-    if (self.instantLiquidation || self.marketHistory.advice === "long") {
-      return ask > minimalLimit ? ask : false;    
+    if (self.instantLiquidation || self.marketHistory.advice === "short") {
+      return ask > minimalLimit ? ask : 0;    
     }
-    return false;
+    return 0;
   }
 
   // If the balance is big enough then the trade is made
