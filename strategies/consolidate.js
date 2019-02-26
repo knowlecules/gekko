@@ -77,6 +77,8 @@ strat.update = function(candle) {
       order.on('completed', () => {
         order.createSummary(summary => console.log)
       });
+    } else {
+      console.log(`Insufficient funds (${asset.amount}) to trade ${asset.name}!`);
     }
     trader.sync(console.log);  
   }  

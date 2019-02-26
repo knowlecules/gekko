@@ -1,4 +1,4 @@
-const Bittrex = require('node.bittrex.api');
+const Bittrex = require('node-bittrex-api');
 const _ = require('lodash');
 const moment = require('moment');
 const retry = require('../exchangeUtils').retry;
@@ -33,7 +33,7 @@ var Trader = function(config) {
     apikey:  this.key,
     apisecret: this.secret,
     stream: false,
-    verbose: false,
+    verbose: true,
     cleartext: false,
     inverse_callback_arguments: true
   });
@@ -621,7 +621,7 @@ Trader.getCapabilities = function() {
     tid: 'tid',
     providesHistory: 'date',
     providesFullHistory: false,
-    tradable: false,
+    tradable: true,
     forceReorderDelay: true,
     gekkoBroker: '0.6.0'
   };

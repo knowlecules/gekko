@@ -19,9 +19,11 @@ config.watch = {
   enabled: false,
 
   // see https://gekko.wizb.it/docs/introduction/supported_exchanges.html
-  exchange: 'binance',
-  currency: 'USDT',
-  asset: 'BTC',
+  exchange: 'bittrex',
+  currency: 'BTC',
+  asset: 'NLG',
+  key:tradeAccounts[0].key,
+  secret:tradeAccounts[0].secret,
 
   // You can set your own tickrate (refresh rate).
   // If you don't set it, the defaults are 2 sec for
@@ -476,9 +478,9 @@ config.StochRSI = {
 
 // custom settings:
 config.consolidate = {
-  currency :"USDT",
-  exchange:"binance",
-  assets: ["BTC","BCHABC","LTC"],
+  currency :"BTC",
+  exchange:"bittrex",
+  assets: ["NLG"],
   tradeAccounts, 
 }
 
