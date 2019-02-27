@@ -3,7 +3,7 @@
 
 var config = {};
 
-const {tradeAccounts} = require("./SECRET-api-keys.json");
+const {tradeAccounts,slack} = require("./SECRET-api-keys.json");
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //                          GENERAL SETTINGS
@@ -24,7 +24,6 @@ config.watch = {
   asset: 'NLG',
   key:tradeAccounts[0].key,
   secret:tradeAccounts[0].secret,
-
   // You can set your own tickrate (refresh rate).
   // If you don't set it, the defaults are 2 sec for
   // okcoin and 20 sec for all other exchanges.
@@ -250,11 +249,11 @@ config.redisBeacon = {
 }
 
 config.slack = {
-  enabled: false,
-  token: '',
+  enabled: true,
+  token: slack.token,
   sendMessageOnStart: true,
   muteSoft: true,
-  channel: '' // #tradebot
+  channel: '#trading' // #tradebot
 }
 
 config.ifttt = {

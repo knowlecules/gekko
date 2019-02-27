@@ -47,6 +47,7 @@ const recoverableErrors = [
   'CONNRESET',
   'CONNREFUSED',
   'NOTFOUND',
+  'INSUFFICIENT_FUNDS',
 ];
 
 const includes = (str, list) => {
