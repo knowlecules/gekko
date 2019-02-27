@@ -49,6 +49,44 @@ Slack.prototype.processStratNotification = function({ content }) {
   this.send(body);
 }
 
+if(slackConfig.emitTrades) {
+  Slack.prototype.processTradeInitiated = function (trade) {
+    const {id, action, portfolio, balance} = trade
+    const color = "orange";
+    const body = this.createResponse(color, `Trade initiated. ID: ${id}\nAction: ${action}\nPortfolio: ${portfolio}\nBalance: ${balance}`);
+    this.send(body);
+  }
+  
+  Slack.prototype.processTradeCancelled = function (trade) {
+    const {id} = trade
+    const color = "purple";
+    const body = this.createResponse(color, `Trade cancelled. ID: ${id}`);
+    this.send(body);
+  }
+  
+  Slack.prototype.processTradeAborted = function (trade) {
+    const {id, reason} = trade
+    const color = "black";
+    const body = this.createResponse(color, `Trade aborted. ID: ${id}\nNot creating order! Reason: ${reason}`);
+    this.send(body);
+  }
+  
+  Slack.prototype.processTradeErrored = function (trade) {
+    const {id, reason} = trade
+    const color = "red";
+    const body = this.createResponse(color, `Trade errored. ID: ${id}\nReason: ${reason}`);
+    this.send(body);
+  }
+  
+  Slack.prototype.processTradeCompleted = function (trade) {
+    const {id, action, price, amount, cost, portfolio, balance, feePercent, effectivePrice} = trade
+    const color = "green";
+    const body = this.createResponse(color, `Trade completed. ID: ${id}\nAction: ${action}\nPrice: ${price}\Amount: ${amount}\nCost: ${cost}` +
+        `\nPortfolio: ${portfolio}\nBalance: ${balance}\nFee percent: ${feePercent}\nEffective price:  ${effectivePrice}`);
+    this.send(body);
+  }
+}
+
 Slack.prototype.send = function(content, done) {
     this.slack.chat.postMessage(slackConfig.channel, "", content, (error, response) => {
       if (error || !response) {

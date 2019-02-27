@@ -49,7 +49,7 @@ const Trader = function(next) {
   this.cancellingOrder = false;
   this.sendInitialPortfolio = false;
 
-  setInterval(this.sync, 1000 * 60 * 1);
+  setInterval(this.sync, 1000 * 60 * 10);
 }
 
 // teach our trader events

@@ -3,7 +3,7 @@
 
 var config = {};
 
-const {tradeAccounts,slack} = require("./SECRET-api-keys.json");
+const {tradeAccounts, slack} = require("./SECRET-api-keys.json");
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //                          GENERAL SETTINGS
@@ -37,8 +37,10 @@ config.watch = {
 config.tradingAdvisor = {
   enabled: true,
   method: 'consolidate',
+  // Set to 15 minutes when delaying for sellers market. 
+  // Otherwise less than 5 to closely follow the curve.
   candleSize: 1,
-  historySize: 1,
+  historySize: 2,
 }
 
 // MACD settings:
@@ -253,6 +255,7 @@ config.slack = {
   token: slack.token,
   sendMessageOnStart: true,
   muteSoft: true,
+  emitTrades: true,
   channel: '#trading' // #tradebot
 }
 
@@ -481,6 +484,7 @@ config.consolidate = {
   exchange:"bittrex",
   assets: ["NLG"],
   tradeAccounts, 
+  upTrendSell:true, 
 }
 
 // custom settings:
