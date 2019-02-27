@@ -16,7 +16,7 @@ services:
 ## optionally set nginx vars if you wish to frontend it with nginx
 #    environment:
 #     - VIRTUAL_HOST=gekko
-#     - PORT=3000
+#     - PORT=3030
 #     - DOMAIN=gekko
 
   redis:

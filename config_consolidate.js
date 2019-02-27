@@ -40,7 +40,20 @@ config.tradingAdvisor = {
   // Set to 15 minutes when delaying for sellers market. 
   // Otherwise less than 5 to closely follow the curve.
   candleSize: 1,
-  historySize: 2,
+  historySize: 1,
+}
+
+// custom settings:
+config.consolidate = {
+  currency :"BTC",
+  exchange:"bittrex",
+  assets: ["NLG"],
+  tradeAccounts,
+  instantLiquidation: true, 
+  // Set to 2 when waiting for buyers market and candlesize is 15. Otherwise 1
+  longTrendCount:1,
+  // Set to 4 when waiting for sellers market and candlesize is 15. Otherwise 1
+  shortTrendCount:1,
 }
 
 // MACD settings:
@@ -253,7 +266,7 @@ config.redisBeacon = {
 config.slack = {
   enabled: true,
   token: slack.token,
-  sendMessageOnStart: true,
+  sendMessageOnStart: false,
   muteSoft: true,
   emitTrades: true,
   channel: '#trading' // #tradebot
@@ -477,15 +490,6 @@ config.StochRSI = {
   }
 };
 
-
-// custom settings:
-config.consolidate = {
-  currency :"BTC",
-  exchange:"bittrex",
-  assets: ["NLG"],
-  tradeAccounts, 
-  upTrendSell:false, 
-}
 
 // custom settings:
 config.custom = {

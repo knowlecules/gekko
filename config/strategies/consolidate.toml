@@ -1,0 +1,7 @@
+  currency = "USDT" 
+  exchange = "binance" 
+  assets = ["BTC"] 
+  tradeAccounts = []
+  instantLiquidation = false
+  longTrendCount = 2
+  shortTrendCount = 2

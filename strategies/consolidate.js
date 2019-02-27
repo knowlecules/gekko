@@ -10,7 +10,7 @@
 
 var log = require('../core/log');
 
-const Broker = require('../exchange/GekkoBroker');
+const Broker = require('../exchange/gekkoBroker');
 const states = require('../exchange/orders/states');
 
 // Let's create our own strat
@@ -19,11 +19,16 @@ let accounts = {};
 
 // Prepare everything our method needs
 strat.init = function() {
-  const {currency, exchange, assets, tradeAccounts, upTrendSell} = this.settings;
+  const {currency, exchange, assets, tradeAccounts, instantLiquidation, longTrendCount, shortTrendCount} = this.settings;
   this.input = 'candle';
   this.currentTrend = 'short';
   this.requiredHistory = 1;
-  this.upTrendSell = upTrendSell;
+  this.instantLiquidation = instantLiquidation;
+  this.shortTrendCount = shortTrendCount;
+  this.longTrendCount = longTrendCount;
+  this.marketHistory = {bullCount: 0, bearCount: 0, advice:false};
+  this.priorCandle = null;
+
   tradeAccounts.forEach((account) => {
     const {key, secret, username} = account;
 
@@ -46,39 +51,79 @@ strat.init = function() {
   })    
 }
 
-let marketHistory = {lastCandle: null, upCount: 0, sell:false};
+function prettyObject(obj) {
+  return JSON.stringify(obj, null, 4).replace(/(^\S*\n|\n*\S*$)/g,'').replace(/"\s*\:\s*"?/g," = ").replace(/"/g,"").replace(/,\n/g,"\n")
+}
+
 // What happens on every new candle?
 strat.update = function(candle) {
 
   // Configure to default to skip market check and always sell
-  let candleParts = {...candle};
-  delete(candleParts.start)
-  delete(candleParts.trades)
-  log.debug("Candle", candleParts);
-  marketHistory.sell = this.upTrendSell;
+  if (this.logCandles) {
+    this.notify("Candle:\n" + prettyObject(candle));
+    log.debug("Candle:\n" + prettyObject(candle));
+  }
+
+  if (!this.priorCandle) {
+    this.priorCandle = candle;
+    return;
+  }
+
+  var trackCandle = true;
+  if (this.instantLiquidation) {
+    var priorTime = new Date(this.priorCandle.start);
+    var thisTime = new Date(candle.start); 
+    //Default 15 minutes
+    trackCandle = thisTime-priorTime >= 15*60*1000;
+  }
+
+  if (!trackCandle) {
+    return;
+  }
 
   // Using candles to wait for a sellers market. Essentially more than 2 increases in a row.
-  if (!marketHistory.lastCandle) {
-    marketHistory.lastCandle = candle;
-  } else if (marketHistory.lastCandle.vwp >  candle.vwp) {
-    marketHistory.upCount ++;
-  } else {
-    if (marketHistory.upCount > 2) {
-      marketHistory.sell = true;
+  this.marketHistory.advice = false;
+  const isBearMarket =  this.priorCandle.open > candle.close;
+  if (isBearMarket) {
+    // Switched from bull market of at least 3 candles
+    if (this.marketHistory.bullCount > this.longTrendCount) {
+      this.marketHistory.advice = 'short';
     }
-    marketHistory.upCount = 0
+    this.marketHistory.bullCount = 0;
+    this.marketHistory.bearCount += 1;
+  } else {
+    // Switched from bear market of at least 3 candles 
+    if (this.marketHistory.bearCount > this.shortTrendCount) {
+      this.marketHistory.advice = 'long';
+    }
+    this.marketHistory.bearCount = 0;
+    this.marketHistory.bullCount += 1;
   }
-  
+  let logMsg = `Market open: ${this.priorCandle.open}, close: ${candle.close}, difference: ${parseInt((candle.close-this.priorCandle.open)*100,10)/100}, rate: ${parseInt((candle.close-this.priorCandle.open)*10000/candle.close,10)/100}%`;
+  log.debug(logMsg, this.marketHistory);
+  this.notify(`${logMsg} \n${prettyObject(this.marketHistory)}\n`);
+  this.priorCandle =  candle;
+}
+
+// For debugging purposes.
+strat.log = function() {}
+
+// Based on the newly calculated
+// information, check if we should
+// update or not.
+strat.check = function() {
+
   // Make sure that the limit is not too low. Not much good when "sticky" trade
   function verifyLimit(ask, bid, minimalLimit) {
-    if (!marketHistory.sell) {
-      return false;
+    // Place holder for more extensive liquidation timing
+    if (self.instantLiquidation || self.marketHistory.advice === "short") {
+      return ask > minimalLimit ? ask : 0;    
     }
-    return ask > minimalLimit ? ask : false;    
+    return 0;
   }
 
   // If the balance is big enough then the trade is made
-  function balanceCheck(account, broker) {
+  function orderOnLiquid(account, broker) {
     if (!Array.isArray(broker.portfolio.balances) || !broker.ticker) {
       return true;
     }
@@ -106,8 +151,11 @@ strat.update = function(candle) {
       return;
     }
 
+    const tradingText = `${sell.toFixed(3)} ${asset} for ${currency}`
+    self.notify(`${client}. Trading ${tradingText}, asking ${ask}. Current bid is ${bid}`);
     log.debug(`${client}: Trading ${tradingText}, asking ${ask}. Current bid is ${bid}`);
-    const order = broker.createOrder(type, side, sell, { limit });
+    const order = broker.createOrder(type, side, sell, { limit });  
+    self.logCandles = true;
     order.on('statusChange', (status) => {
       broker.activeTradingState = status;
       log.debug(`${client}: Order ${tradingText}. Status changed:[${status}]`);
@@ -116,9 +164,12 @@ strat.update = function(candle) {
       log.debug(`${client}:  Filled ${tradingText}.`);
     });
     order.on('completed', () => {
-      order.createSummary((err, summary) => log.debug(summary));
+      self.logCandles = false;
+      order.createSummary((err, summary) => {
+        log.debug("Order completed summary:\n" + prettyObject(summary));
+        self.notify("Order completed summary:\n" + prettyObject(summary));
+      });
     });
-
   }  
 
   // To make sure we only open one order at a time for the same currency pair
@@ -127,38 +178,32 @@ strat.update = function(candle) {
     return (status == states.OPEN || status == states.MOVING || status == states.INITIALIZING|| status == states.SUBMITTED);
   } 
 
-  Object.entries(accounts).forEach(([username, brokerList]) => {
-    const {account, brokers} = brokerList;
-    if(!account.syncing && brokers[0]) {
-      account.syncing = true;
-      brokers.forEach((broker) => {
-        broker.sync(() => {
-          if (!hasActiveTrade(broker)) {
-            balanceCheck(account, broker);
-          }
-          account.syncing = false;
-        })
-      });
-    }
-  });  
-}
-
-// For debugging purposes.
-strat.log = function() {
-  if (this.createdOrder){
-    log.debug('Order opened to sell all.');
+  var self = this;
+  // Only show advice when running the strategy
+  if (this.marketHistory.advice && !this.instantLiquidation) {
+    this.advice(this.marketHistory.advice);
   }
-}
+  
+  if (this.marketHistory.advice || this.instantLiquidation) {
+    Object.entries(accounts).forEach(([username, brokerList]) => {
+      const {account, brokers} = brokerList;
+      if(!account.syncing && brokers[0]) {
+        account.syncing = true;
+        brokers.forEach((broker) => {
+          broker.sync((data, err) => {
+            account.syncing = false;
+            if (err && err.message) {
+              console.error("Error during broker.sync for:",account, broker.market, err.message);
+              self.notify("Unable to sync account:" + account.client);
+            }
 
-// Based on the newly calculated
-// information, check if we should
-// update or not.
-strat.check = function() {
-
-  if(this.hasZeroBalance) {
-    this.advice('long');
-  } else {
-    this.advice('short');
+            if (!hasActiveTrade(broker)) {
+              orderOnLiquid(account, broker);
+            }
+          })
+        });
+      }
+    }); 
   }
 }
 

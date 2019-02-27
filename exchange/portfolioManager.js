@@ -41,7 +41,11 @@ class Portfolio {
     let set = (err, fullPortfolio) => {
       if(err) {
         console.log(err);
-        throw new errors.ExchangeError(err);
+        if(_.isFunction(callback)){
+          return callback(null, err);
+        }
+
+       throw new errors.ExchangeError(err);
       }
 
       // only include the currency/asset of this market
@@ -68,8 +72,13 @@ class Portfolio {
   
   setFee(callback) {
     this.api.getFee((err, fee) => {
-      if(err)
+      if(err){
+        if(_.isFunction(callback)){
+          return callback(null, err);
+        }
+
         throw new errors.ExchangeError(err);
+      }
 
       this.fee = fee;
 
