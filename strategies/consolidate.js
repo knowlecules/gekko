@@ -54,7 +54,7 @@ strat.update = function(candle) {
   let candleParts = {...candle};
   delete(candleParts.start)
   delete(candleParts.trades)
-  console.log("Candle", candleParts);
+  log.debug("Candle", candleParts);
   marketHistory.sell = this.upTrendSell;
 
   // Using candles to wait for a sellers market. Essentially more than 2 increases in a row.
@@ -87,34 +87,36 @@ strat.update = function(candle) {
     const {minimalOrder} = broker.marketConfig
     let {amount} = broker.portfolio.balances.find(el => el.name === asset);
 
-    log.debug(`${client}: Trade check ${amount.toFixed(3)} ${asset} for ${currency}.`);
-    if (amount < (minimalOrder.amount * 100)) {
-      return true;
-    }
-
     const fee = amount * broker.portfolio.fee;
     const sell = (amount - fee);
     const type = 'sticky';
     const side = 'sell';
     const {ask, bid} = broker.ticker;
     const limit = verifyLimit(ask, bid, minimalOrder.price);
+    const tradingText = `${sell.toFixed(3)} ${asset} for ${currency}`
     
+    log.debug(`${client}: Trade check ${amount.toFixed(3)} ${asset} for ${currency}.`);
+    if (amount < (minimalOrder.amount * 100)) {
+      log.debug(`${client}:  Insufficient balance: ${tradingText}.`);
+      return true;
+    }
+
     if (!limit) {
+      log.debug(`${client}:  Abort trade as ask of ${ask} is too low: ${tradingText}.`);
       return;
     }
 
-    const tradingText = `${sell.toFixed(3)} ${asset} for ${currency}`
     log.debug(`${client}: Trading ${tradingText}, asking ${ask}. Current bid is ${bid}`);
     const order = broker.createOrder(type, side, sell, { limit });
     order.on('statusChange', (status) => {
       broker.activeTradingState = status;
-      console.log(`${client}: Order ${tradingText}. Status changed:[${status}]`);
+      log.debug(`${client}: Order ${tradingText}. Status changed:[${status}]`);
     });
     order.on('filled', result => {
-      console.log(`${client}:  Filled ${tradingText}.`);
+      log.debug(`${client}:  Filled ${tradingText}.`);
     });
     order.on('completed', () => {
-      order.createSummary((err, summary) => console.log(summary));
+      order.createSummary((err, summary) => log.debug(summary));
     });
 
   }  

@@ -484,7 +484,7 @@ config.consolidate = {
   exchange:"bittrex",
   assets: ["NLG"],
   tradeAccounts, 
-  upTrendSell:true, 
+  upTrendSell:false, 
 }
 
 // custom settings:

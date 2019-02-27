@@ -462,7 +462,7 @@ Trader.getCapabilities = function() {
       { pair: ['BTC','NAV'], minimalOrder: { amount: 0.00000001, unit: 'asset' }},
       { pair: ['BTC','NBT'], minimalOrder: { amount: 0.00000001, unit: 'asset' }},
       { pair: ['BTC','NEO'], minimalOrder: { amount: 0.00000001, unit: 'asset' }},
-      { pair: ['BTC','NLG'], minimalOrder: { amount: 0.00000001, unit: 'asset' }},
+      { pair: ['BTC','NLG'], minimalOrder: { amount: 1, unit: 'asset', 'price': 0.000003, }},
       { pair: ['BTC','NMR'], minimalOrder: { amount: 0.00000001, unit: 'asset' }},
       { pair: ['BTC','NXC'], minimalOrder: { amount: 0.00000001, unit: 'asset' }},
       { pair: ['BTC','NXS'], minimalOrder: { amount: 0.00000001, unit: 'asset' }},
