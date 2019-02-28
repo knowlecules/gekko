@@ -48,6 +48,7 @@ const recoverableErrors = [
   'CONNREFUSED',
   'NOTFOUND',
   'INSUFFICIENT_FUNDS',
+  'MARKET_OFFLINE',
 ];
 
 const includes = (str, list) => {
@@ -192,16 +193,44 @@ Trader.prototype.sell = function(amount, price, callback) {
   const fetch = next => this.bittrexApi.selllimit({market: this.pair, quantity: amount, rate: price}, this.processResponse(next));
   retry(null, fetch, handle);
 }
-
+/* Order schema as per docs
+      "Uuid": "string (uuid)",
+      "OrderUuid": "8925d746-bc9f-4684-b1aa-e507467aaa99",
+      "Exchange": "BTC-LTC",
+      "OrderType": "string",
+      "Quantity": 100000,
+      "QuantityRemaining": 100000,
+      "Limit": 1e-8,
+      "CommissionPaid": 0,
+      "Price": 0,
+      "PricePerUnit": null,
+      "Opened": "2014-07-09T03:55:48.583",
+      "Closed": null,
+      "CancelInitiated": "boolean",
+      "ImmediateOrCancel": "boolean",
+      "IsConditional": "boolean"
+      */
 Trader.prototype.checkOrder = function(order, callback) {
-  const handle = (err, result) => {
+  const handle = (err, data) => {
+    if (err) {
+      console.log('this is after we have retried fetching it');
+      // this is after we have retried fetching it
+      // in this.handleResponse.
+      if(err.message.includes('Not Found')) {
+        return callback(undefined, {
+          open: false,
+          executed: true
+        });
+      }
 
-    if(err) {
       return callback(err);
     }
-
-    console.log('checkOrder', result);
-    throw 'a';
+    const order = data.result && data.result[0] ? data.result[0] : {};
+    return callback(undefined, {
+      open: !order.Closed,
+      executed: !!order.Closed || order.QuantityRemaining == 0,
+      filledAmount: +order.quantity
+    });
   }
 
   const fetch = next => this.bittrexApi.getopenorders({market: this.pair}, this.processResponse(next));

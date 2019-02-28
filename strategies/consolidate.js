@@ -15,19 +15,20 @@ const states = require('../exchange/orders/states');
 
 // Let's create our own strat
 var strat = {};
-let accounts = {};
 
 // Prepare everything our method needs
 strat.init = function() {
-  const {currency, exchange, assets, tradeAccounts, instantLiquidation, longTrendCount, shortTrendCount} = this.settings;
+  const {currency, exchange, assets, tradeAccounts, instantLiquidation, longTrendCount, shortTrendCount, limitFactor} = this.settings;
   this.input = 'candle';
   this.currentTrend = 'short';
   this.requiredHistory = 1;
   this.instantLiquidation = instantLiquidation;
   this.shortTrendCount = shortTrendCount;
   this.longTrendCount = longTrendCount;
+  this.limitFactor = limitFactor || 1;
   this.marketHistory = {bullCount: 0, bearCount: 0, advice:false};
   this.priorCandle = null;
+  this.accounts = {};
 
   tradeAccounts.forEach((account) => {
     const {key, secret, username} = account;
@@ -43,10 +44,10 @@ strat.init = function() {
         passphrase: 'z',
         customInterval:100
       });
-      if (!accounts[username]) {
-        accounts[username] = {account, brokers: []};
+      if (!this.accounts[username]) {
+        this.accounts[username] = {account, brokers: []};
       }
-      accounts[username].brokers.push(broker);
+      this.accounts[username].brokers.push(broker);
     })    
   })    
 }
@@ -103,6 +104,7 @@ strat.update = function(candle) {
   log.debug(logMsg, this.marketHistory);
   this.notify(`${logMsg} \n${prettyObject(this.marketHistory)}\n`);
   this.priorCandle =  candle;
+  this.check();
 }
 
 // For debugging purposes.
@@ -117,7 +119,7 @@ strat.check = function() {
   function verifyLimit(ask, bid, minimalLimit) {
     // Place holder for more extensive liquidation timing
     if (self.instantLiquidation || self.marketHistory.advice === "short") {
-      return ask > minimalLimit ? ask : 0;    
+      return ask > minimalLimit ? ask*self.limitFactor : 0;    
     }
     return 0;
   }
@@ -131,7 +133,9 @@ strat.check = function() {
     const {asset, currency} = broker.config;
     const {minimalOrder} = broker.marketConfig
     let {amount} = broker.portfolio.balances.find(el => el.name === asset);
-
+    if (isNaN(amount)) {
+      amount = 0;
+    }
     const fee = amount * broker.portfolio.fee;
     const sell = (amount - fee);
     const type = 'sticky';
@@ -151,10 +155,12 @@ strat.check = function() {
       return;
     }
 
-    const tradingText = `${sell.toFixed(3)} ${asset} for ${currency}`
     self.notify(`${client}. Trading ${tradingText}, asking ${ask}. Current bid is ${bid}`);
     log.debug(`${client}: Trading ${tradingText}, asking ${ask}. Current bid is ${bid}`);
-    const order = broker.createOrder(type, side, sell, { limit });  
+    const order = broker.createOrder(type, side, sell, { limit });
+    if (limit < ask) {
+      order.moveLimit(limit);
+    } 
     self.logCandles = true;
     order.on('statusChange', (status) => {
       broker.activeTradingState = status;
@@ -185,7 +191,7 @@ strat.check = function() {
   }
   
   if (this.marketHistory.advice || this.instantLiquidation) {
-    Object.entries(accounts).forEach(([username, brokerList]) => {
+    Object.entries(this.accounts).forEach(([username, brokerList]) => {
       const {account, brokers} = brokerList;
       if(!account.syncing && brokers[0]) {
         account.syncing = true;

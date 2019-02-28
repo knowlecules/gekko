@@ -54,6 +54,8 @@ config.consolidate = {
   longTrendCount:1,
   // Set to 4 when waiting for sellers market and candlesize is 15. Otherwise 1
   shortTrendCount:1,
+  // Move limit to percentage of lowest ask
+  limitFactor:0.98,
 }
 
 // MACD settings:
