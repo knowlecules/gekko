@@ -35,6 +35,8 @@ var Log = function() {
     this.output = console;
   else if(this.env === 'child-process')
     this.output = sendToParent();
+
+  this.output = console;
 };
 
 Log.prototype = {

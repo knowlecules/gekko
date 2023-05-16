@@ -10,7 +10,8 @@
     "AST",
     "KNC",
     "WTC",
-    "SNGLS",
+    "SOL",
+    "CKB",
     "EOS",
     "SNT",
     "MCO",
@@ -147,9 +148,15 @@
     "ZEN",
     "ZIL",
     "BCHABC",
-    "BCHSV"
+    "BCHSV",
+    "USDT",
+    "TUSD",
+    "BUSD",
+    "USDC"
   ],
   "currencies": [
+    "SOL",
+    "CKB",
     "BNB",
     "BTC",
     "ETH",
@@ -290,13 +297,90 @@
     },
     {
       "pair": [
-        "BTC",
-        "SNGLS"
+        "USDT",
+        "SOL"
       ],
       "minimalOrder": {
         "amount": 1,
         "price": 1e-8,
         "order": 0.001
+      }
+    },
+    {
+      "pair": [
+        "SOL",
+        "USDT"
+      ],
+      "minimalOrder": {
+        "amount": 1,
+        "price": 1e-8,
+        "order": 0.001
+      }
+    },
+    {
+      "pair": [
+        "BTC",
+        "SOL"
+      ],
+      "minimalOrder": {
+        "amount": 1,
+        "price": 1e-8,
+        "order": 0.001
+      }
+    },
+    {
+      "pair": [
+        "ETH",
+        "SOL"
+      ],
+      "minimalOrder": {
+        "amount": 1,
+        "price": 1e-8,
+        "order": 0.01
+      }
+    },
+    {
+      "pair": [
+        "USDT",
+        "CKB"
+      ],
+      "minimalOrder": {
+        "amount": 1,
+        "price": 1e-8,
+        "order": 0.001
+      }
+    },
+    {
+      "pair": [
+        "CKB",
+        "USDT"
+      ],
+      "minimalOrder": {
+        "amount": 1,
+        "price": 1e-8,
+        "order": 0.001
+      }
+    },
+    {
+      "pair": [
+        "BTC",
+        "CKB"
+      ],
+      "minimalOrder": {
+        "amount": 1,
+        "price": 1e-8,
+        "order": 0.001
+      }
+    },
+    {
+      "pair": [
+        "ETH",
+        "CKB"
+      ],
+      "minimalOrder": {
+        "amount": 1,
+        "price": 1e-8,
+        "order": 0.01
       }
     },
     {
@@ -457,17 +541,6 @@
       "pair": [
         "ETH",
         "SNM"
-      ],
-      "minimalOrder": {
-        "amount": 1,
-        "price": 1e-8,
-        "order": 0.01
-      }
-    },
-    {
-      "pair": [
-        "ETH",
-        "SNGLS"
       ],
       "minimalOrder": {
         "amount": 1,

@@ -1,0 +1,4 @@
+amount = 1000
+riseTrigger = 0.01
+riseReq = 0.03
+dropReq = -0.02
