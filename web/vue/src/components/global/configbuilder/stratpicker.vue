@@ -41,10 +41,10 @@ export default {
     return {
       strategies: [],
 
-      candleSizeUnit: 'hours',
-      rawCandleSize: 1,
+      candleSizeUnit: 'minutes',
+      rawCandleSize: 30,
 
-      strategy: 'MACD',
+      strategy: 'mini_pump',
       historySize: 10,
 
       rawStratParams: '',

@@ -1,4 +1,13 @@
 amount = 1000
-riseTrigger = 0.01
-riseReq = 0.03
-dropReq = -0.02
+# The initial rise ratio to start a pump or dump tracking
+riseTrigger = 0.005
+# Rise ratio to be in "pumped" 
+riseReq = 0.04
+# Drop ratio to be in "dumped" 
+dropReq = 0.03
+# must be less than plateauMargin when plateauCandles > 0
+trendFlip = 0.003 
+# The absolute amount a candle percentage rise can fluctuate to be considered in no trend
+plateauMargin = 0.008
+# The minimum number of candles of small fluctuations to be considered on a plateau (Usually triggering a sell or buy after a pump or dump respectively)
+plateauCandles = 6

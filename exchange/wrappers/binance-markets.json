@@ -86,6 +86,7 @@
     "LRC",
     "LSK",
     "LUN",
+    "MATIC",
     "MANA",
     "MDA",
     "MFT",
@@ -97,6 +98,7 @@
     "NAV",
     "NCASH",
     "NEBL",
+    "NEXO",
     "NPXS",
     "NXS",
     "ONT",
@@ -1573,6 +1575,17 @@
     },
     {
       "pair": [
+        "USDT",
+        "DASH"
+      ],
+      "minimalOrder": {
+        "amount": 0.001,
+        "price": 0.00001,
+        "order": 0.01
+      }
+    },
+    {
+      "pair": [
         "BTC",
         "DATA"
       ],
@@ -2585,6 +2598,39 @@
     },
     {
       "pair": [
+        "USDT",
+        "MATIC"
+      ],
+      "minimalOrder": {
+        "amount": 0.01,
+        "price": 1e-7,
+        "order": 0.001
+      }
+    },
+    {
+      "pair": [
+        "BTC",
+        "MATIC"
+      ],
+      "minimalOrder": {
+        "amount": 0.01,
+        "price": 1e-7,
+        "order": 0.001
+      }
+    },
+    {
+      "pair": [
+        "ETH",
+        "MATIC"
+      ],
+      "minimalOrder": {
+        "amount": 0.01,
+        "price": 0.000001,
+        "order": 0.01
+      }
+    },
+    {
+      "pair": [
         "BTC",
         "MTL"
       ],
@@ -2763,6 +2809,39 @@
       "pair": [
         "ETH",
         "NEBL"
+      ],
+      "minimalOrder": {
+        "amount": 0.01,
+        "price": 0.000001,
+        "order": 0.01
+      }
+    },
+    {
+      "pair": [
+        "USDT",
+        "NEXO"
+      ],
+      "minimalOrder": {
+        "amount": 0.1,
+        "price": 0.00001,
+        "order": 1
+      }
+    },
+    {
+      "pair": [
+        "BTC",
+        "NEXO"
+      ],
+      "minimalOrder": {
+        "amount": 0.01,
+        "price": 1e-7,
+        "order": 0.001
+      }
+    },
+    {
+      "pair": [
+        "ETH",
+        "NEXO"
       ],
       "minimalOrder": {
         "amount": 0.01,
@@ -4187,6 +4266,17 @@
         "amount": 0.001,
         "price": 0.00001,
         "order": 0.01
+      }
+    },
+    {
+      "pair": [
+        "USDT",
+        "XMR"
+      ],
+      "minimalOrder": {
+        "amount": 0.00001,
+        "price": 0.01,
+        "order": 10
       }
     },
     {

@@ -8,6 +8,7 @@
 // a 10% chance it will recommend to change your position (to either
 // long or short).
 
+const { should } = require('chai');
 var log = require('../core/log');
 
 const Broker = require('../exchange/GekkoBroker');
@@ -64,18 +65,24 @@ strat.init = function() {
   'volume':2.488280000000002,
   'trades':202}"
 */
-let pumpOpen = 0;
-let interrise = 0;
+let pumpInit = 0;
+let dumpInit = 0;
+let tradeMode = 'short';
+let plateauRange = 0;
+let hasPlateaud = false;
 strat.update = function(candle) {
   
   this.candle = candle;
   const {close, open, low, high} = candle;
-  const {riseReq, dropReq, riseTrigger} = this.settings;
+  const {riseReq, dropReq, riseTrigger, trendFlip, plateauCandles, plateauMargin} = this.settings;
 
   if (this.buyOnInit) {
     this.buyOnInit = false;
     this.shouldBuy = true;
+    this.sellAt = (1 + riseReq) * close;  
+    this.close = close
     this.buyAt = close
+    this.lastBuyAt = close
     return;
   } 
 
@@ -86,38 +93,60 @@ strat.update = function(candle) {
   this.pumpState = '';
 
   // A sell watch is triggered on tall(ish) bull candles 
-  if (!this.sellAt && this.rise >= riseTrigger) {
+  if (!pumpInit && this.rise >= riseTrigger) {
     this.pumpState = 'pumped';
 
-    // Track open value to enable historical candle metrics
-    if (!pumpOpen) {
-      pumpOpen = open;
+    // Track open value to enable historical candle metrics. Do not overwrite until sell
+    if (!pumpInit) {
+      pumpInit = close;
     }
-  } else if (!this.buyAt && this.rise <= dropReq) {
+    plateauRange = 0;
+  } else if (this.rise <= -riseTrigger) {
     // A buy watch is triggered on tall bear candles 
     this.pumpState = 'dumped';
+    if (!dumpInit || open > dumpInit) {
+      dumpInit = open;
+    }
+    pumpInit = 0;
   }
+
+  if (Math.abs(this.rise) < plateauMargin) {
+    ++plateauRange;
+  } else {
+    plateauRange = 0;
+  }  
+  hasPlateaud = plateauRange >= plateauCandles;
 
   if (this.pumpState)  {
-    log.info(this.pumpState);
+    // log.warn(this.pumpState);
   }
 
-  // Only sell if a large pump (risereq) is apparent across a few candles and a bear happened
-  if (pumpOpen && this.rise < -0.001 && !this.buyAt) {
-    let interrise = (close - pumpOpen) / close;
-    this.shouldSell = (interrise > riseReq );
-    if (this.shouldSell) {
-      this.sellAt = close;
-      pumpOpen = 0;
-      this.buyAt = (1 + dropReq) * close;
-    }
-  } else if (close <= this.buyAt && this.rise > 0.001) {
-    // After dumping we still have to wait for a candle so we can buy low. (Then sell high)
-    this.shouldBuy = true;
-    this.sellAt = (1 + riseReq) * close;
+  if (hasPlateaud) {
+    // Only sell if a large pump (risereq) is apparent across a few candles and a sell-off happened
+    this.close = close;
+    if ((close >= this.sellAt || pumpInit) && this.rise < -trendFlip && !this.buyAt) {
+      let interrise = (close - pumpInit) / close;
+      // Make sure a minimum rise has been reached
+      this.shouldSell = (interrise > riseReq );
+      if (this.shouldSell) {
+        pumpInit = 0;
+        hasPlateaud = false;
+        // Set future buys so that we don't lose money
+        this.buyAt = (1 - dropReq) * close;
+      }
+    } else if ((close <= this.buyAt ) && this.rise > trendFlip && !this.sellAt) {
+      // After dumping we still have to wait for a candle so we can buy low. (Then sell high)
+      let interrise = (close - dumpInit) / close;
+      // Make sure a minimum drop has been reached
+      this.shouldBuy = (interrise <= -dropReq);
+      if (this.shouldBuy) {
+        hasPlateaud = false;
+        dumpInit = 0;
+        this.lastBuyAt = close;
+        this.sellAt = (1 + riseReq) * close;  
+      }
+    }  
   }
-
-  this.log()
 }
 
 
@@ -158,16 +187,19 @@ strat.check = function() {
 
 
   if (this.shouldBuy && this.buyAt) {
+    log.warn(`buy ${this.close.toFixed(4)}, next sale ${this.sellAt.toFixed(4)}`);
     this.trend.adviced = true;
     this.buyAt = 0;
-    log.warn('buy');
+    tradeMode = 'long';
     this.advice('long');
+    pumpInit = 0;
   } else if (this.shouldSell && this.sellAt) {
+    log.warn(`sell ${this.close.toFixed(4)}, next buy ${this.buyAt.toFixed(4)}, previous buy ${this.lastBuyAt.toFixed(4)}`);
     this.trend.adviced = true;
     this.sellAt = 0;
-    log.warn('sell');
+    tradeMode = 'short';
     this.advice('short');
-  } else{
+  } else {
 		this.advice();
   }
   
@@ -179,7 +211,7 @@ strat.check = function() {
 var lastSellAt = 0;
 strat.log = function() {
   var digits = 4;
-  log.debug(`\tSell=${this.shouldSell}:${this.sellAt.toFixed(digits)},Buy=${this.shouldBuy}:${this.buyAt.toFixed(digits)}, \tclose:${this.candle.close}, rise:${(this.rise ||0).toFixed(digits)} pumpOpen:${pumpOpen}, PumpState?${this.pumpState}`)
+    log.debug(`${tradeMode}, Sell=${this.shouldSell}:${this.sellAt.toFixed(digits)},Buy=${this.shouldBuy}:${this.buyAt.toFixed(digits)}, \tclose:${this.candle.close}, rise:${(this.rise ||0).toFixed(digits)} pumpInit:${pumpInit}, dumpInit:${dumpInit}, Plateau:${plateauRange}`)
 /*
   log.debug('calculated mini_pump properties for candle:');
   log.debug('\t', 'candle:', JSON.stringify(this.candle));
@@ -188,7 +220,7 @@ strat.log = function() {
 	log.debug("mini-pump pump:\t\t" + this.pumpState);
 	log.debug("mini-pump sell:\t\t" + this.shouldSell);
 	log.debug("mini-pump buy:\t\t" + this.shouldBuy);
-	log.debug("mini-pump pumpOpen:\t\t" + pumpOpen);
+	log.debug("mini-pump pumpInit:\t\t" + pumpInit);
 	log.debug("mini-pump trend:\t\t" + JSON.stringify(this.trend));
 */
 }
