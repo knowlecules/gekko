@@ -11,3 +11,9 @@ trendFlip = 0.003
 plateauMargin = 0.008
 # The minimum number of candles of small fluctuations to be considered on a plateau (Usually triggering a sell or buy after a pump or dump respectively)
 plateauCandles = 6
+# the Max drop to avoid buying in a bear market
+bearFactor = 1.04
+# The number of candles that we store to find the trailing market height
+trailingHistoryCount = 192
+# avoid selling when market has dipped too much
+dipFactor = 0.6
