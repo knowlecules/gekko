@@ -1,0 +1,307 @@
+{
+  "assets": [
+    "BTC",
+    "ETH",
+    "SOL",
+    "XRP",
+    "ADA",
+    "DOGE",
+    "LINK",
+    "BNB",
+    "UNI",
+    "LTC",
+    "DOT",
+    "MATIC",
+    "AVAX",
+    "ATOM",
+    "XLM",
+    "ETC",
+    "ALGO",
+    "FIL",
+    "TRX",
+    "NEAR",
+    "SAND",
+    "MANA",
+    "SHIB",
+    "APT",
+    "SUI",
+    "ARB",
+    "OP",
+    "INJ",
+    "PEPE",
+    "WIF",
+    "RENDER",
+    "GRT",
+    "IMX",
+    "ICP",
+    "CRV",
+    "AAVE",
+    "MKR",
+    "SNX",
+    "FTM",
+    "RUNE"
+  ],
+  "currencies": [
+    "USDT",
+    "USDC",
+    "BTC",
+    "ETH",
+    "DAI",
+    "TUSD"
+  ],
+  "markets": [
+    {
+      "pair": [
+        "USDT",
+        "BTC"
+      ],
+      "minimalOrder": {
+        "amount": 0.00001,
+        "price": 0.1,
+        "order": 1
+      }
+    },
+    {
+      "pair": [
+        "USDT",
+        "ETH"
+      ],
+      "minimalOrder": {
+        "amount": 0.0001,
+        "price": 0.01,
+        "order": 1
+      }
+    },
+    {
+      "pair": [
+        "USDC",
+        "BTC"
+      ],
+      "minimalOrder": {
+        "amount": 0.00001,
+        "price": 0.1,
+        "order": 1
+      }
+    },
+    {
+      "pair": [
+        "USDC",
+        "ETH"
+      ],
+      "minimalOrder": {
+        "amount": 0.0001,
+        "price": 0.01,
+        "order": 1
+      }
+    },
+    {
+      "pair": [
+        "BTC",
+        "ETH"
+      ],
+      "minimalOrder": {
+        "amount": 0.0001,
+        "price": 0.00001,
+        "order": 0.0001
+      }
+    },
+    {
+      "pair": [
+        "USDT",
+        "SOL"
+      ],
+      "minimalOrder": {
+        "amount": 0.01,
+        "price": 0.001,
+        "order": 1
+      }
+    },
+    {
+      "pair": [
+        "USDT",
+        "XRP"
+      ],
+      "minimalOrder": {
+        "amount": 0.1,
+        "price": 0.0001,
+        "order": 1
+      }
+    },
+    {
+      "pair": [
+        "USDT",
+        "ADA"
+      ],
+      "minimalOrder": {
+        "amount": 1,
+        "price": 0.0001,
+        "order": 1
+      }
+    },
+    {
+      "pair": [
+        "USDT",
+        "DOGE"
+      ],
+      "minimalOrder": {
+        "amount": 1,
+        "price": 0.00001,
+        "order": 1
+      }
+    },
+    {
+      "pair": [
+        "USDT",
+        "LINK"
+      ],
+      "minimalOrder": {
+        "amount": 0.1,
+        "price": 0.001,
+        "order": 1
+      }
+    },
+    {
+      "pair": [
+        "USDT",
+        "BNB"
+      ],
+      "minimalOrder": {
+        "amount": 0.01,
+        "price": 0.01,
+        "order": 1
+      }
+    },
+    {
+      "pair": [
+        "USDT",
+        "UNI"
+      ],
+      "minimalOrder": {
+        "amount": 0.1,
+        "price": 0.001,
+        "order": 1
+      }
+    },
+    {
+      "pair": [
+        "USDT",
+        "LTC"
+      ],
+      "minimalOrder": {
+        "amount": 0.01,
+        "price": 0.01,
+        "order": 1
+      }
+    },
+    {
+      "pair": [
+        "USDT",
+        "DOT"
+      ],
+      "minimalOrder": {
+        "amount": 0.1,
+        "price": 0.001,
+        "order": 1
+      }
+    },
+    {
+      "pair": [
+        "USDT",
+        "MATIC"
+      ],
+      "minimalOrder": {
+        "amount": 1,
+        "price": 0.0001,
+        "order": 1
+      }
+    },
+    {
+      "pair": [
+        "USDT",
+        "AVAX"
+      ],
+      "minimalOrder": {
+        "amount": 0.1,
+        "price": 0.001,
+        "order": 1
+      }
+    },
+    {
+      "pair": [
+        "USDT",
+        "ATOM"
+      ],
+      "minimalOrder": {
+        "amount": 0.1,
+        "price": 0.001,
+        "order": 1
+      }
+    },
+    {
+      "pair": [
+        "BTC",
+        "SOL"
+      ],
+      "minimalOrder": {
+        "amount": 0.01,
+        "price": 0.000001,
+        "order": 0.0001
+      }
+    },
+    {
+      "pair": [
+        "BTC",
+        "XRP"
+      ],
+      "minimalOrder": {
+        "amount": 0.1,
+        "price": 0.00000001,
+        "order": 0.0001
+      }
+    },
+    {
+      "pair": [
+        "BTC",
+        "ADA"
+      ],
+      "minimalOrder": {
+        "amount": 1,
+        "price": 0.00000001,
+        "order": 0.0001
+      }
+    },
+    {
+      "pair": [
+        "ETH",
+        "SOL"
+      ],
+      "minimalOrder": {
+        "amount": 0.01,
+        "price": 0.00001,
+        "order": 0.001
+      }
+    },
+    {
+      "pair": [
+        "ETH",
+        "XRP"
+      ],
+      "minimalOrder": {
+        "amount": 0.1,
+        "price": 0.0000001,
+        "order": 0.001
+      }
+    },
+    {
+      "pair": [
+        "ETH",
+        "ADA"
+      ],
+      "minimalOrder": {
+        "amount": 1,
+        "price": 0.0000001,
+        "order": 0.001
+      }
+    }
+  ]
+}
