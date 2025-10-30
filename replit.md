@@ -33,24 +33,52 @@ This fork includes custom trading strategies:
 
 ## Running the Bot
 
-### Start with Web UI
+### ✅ Quick Start (Web UI Mode - Recommended)
+To start Gekko with the web interface:
 ```bash
 node gekko.js --ui
 ```
-or
+
+This will start the web UI on **http://localhost:3000** where you can:
+- Configure trading strategies
+- Run backtests on historical data
+- Monitor paper trading (simulated trades with no real money)
+- View performance metrics
+
+### Alternative Start Methods
+
+**Using npm:**
 ```bash
 npm start
 ```
 
-### Start with a specific config
+**With a specific config file:**
 ```bash
 node gekko.js --config config.js
 ```
 
-### Backtest a strategy
+**Backtest mode:**
 ```bash
 node gekko.js --config config.js --backtest
 ```
+
+### ⚙️ Current Configuration Status
+- **Config file**: `config.js` (created from sample-config.js)
+- **Trading mode**: Paper trading (ENABLED - safe, no real money)
+- **Real trading**: DISABLED (for safety)
+- **Exchange**: Binance
+- **Trading pair**: BTC/USDT
+- **Strategy**: MACD (default)
+- **Starting balance**: 1 BTC + 100 USDT (simulated)
+
+### 📦 Dependencies Status
+✅ All dependencies installed including:
+- Koa web server
+- SQLite3 database
+- Tulind technical indicators library
+- WebSocket support
+- Moment.js for time handling
+- All exchange API libraries
 
 ## Configuration
 - Main config: `sample-config.js` (copy and customize)
