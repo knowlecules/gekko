@@ -14,7 +14,7 @@ const CONFIG = {
   ui: {
     ssl: typeof window !== 'undefined' ? window.location.protocol === 'https:' : false,
     host: typeof window !== 'undefined' ? window.location.hostname : 'localhost',
-    port: typeof window !== 'undefined' ? window.location.port || 5000 : 5000,
+    port: typeof window !== 'undefined' ? (window.location.port ? parseInt(window.location.port) : (window.location.protocol === 'https:' ? 443 : 80)) : 5000,
     path: '/'
   },
   adapter: 'sqlite'
