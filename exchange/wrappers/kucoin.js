@@ -205,12 +205,13 @@ Trader.prototype.getFee = function(callback) {
       return callback(undefined, this.fee);
     }
 
-    // KuCoin returns maker and taker fees
-    const makerFee = parseFloat(data.data.makerFeeRate);
-    const takerFee = parseFloat(data.data.takerFeeRate);
+    // KuCoin returns maker and taker fees as strings (e.g., "-0.001" or "0.001")
+    // Normalize to positive decimals for Gekko's fee calculations
+    const makerFee = Math.abs(parseFloat(data.data.makerFeeRate)) || 0;
+    const takerFee = Math.abs(parseFloat(data.data.takerFeeRate)) || 0;
     
-    // Use taker fee as it's typically higher
-    this.fee = takerFee || 0.001;
+    // Use taker fee as it's typically higher, fallback to default if both are 0
+    this.fee = takerFee || makerFee || 0.001;
 
     callback(undefined, this.fee);
   }

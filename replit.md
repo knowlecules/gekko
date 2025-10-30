@@ -9,7 +9,7 @@ This is a Bitcoin/cryptocurrency trading bot built with Node.js that connects to
 - Backtesting capabilities on historical data
 - Web-based UI built with Vue.js
 - Multiple custom trading strategies
-- Support for various cryptocurrency exchanges (Binance, Bitfinex, etc.)
+- Support for various cryptocurrency exchanges (Binance, Bitfinex, KuCoin, etc.)
 
 ## Project Structure
 - `/core` - Core trading engine and bot logic
@@ -39,7 +39,7 @@ To start Gekko with the web interface:
 node gekko.js --ui
 ```
 
-This will start the web UI on **http://localhost:3000** where you can:
+This will start the web UI on **http://localhost:5000** where you can:
 - Configure trading strategies
 - Run backtests on historical data
 - Monitor paper trading (simulated trades with no real money)
@@ -66,7 +66,7 @@ node gekko.js --config config.js --backtest
 - **Config file**: `config.js` (created from sample-config.js)
 - **Trading mode**: Paper trading (ENABLED - safe, no real money)
 - **Real trading**: DISABLED (for safety)
-- **Exchange**: Binance
+- **Exchange**: KuCoin (with API credentials stored in environment variables)
 - **Trading pair**: BTC/USDT
 - **Strategy**: MACD (default)
 - **Starting balance**: 1 BTC + 100 USDT (simulated)
@@ -78,7 +78,8 @@ node gekko.js --config config.js --backtest
 - Tulind technical indicators library
 - WebSocket support
 - Moment.js for time handling
-- All exchange API libraries
+- All exchange API libraries (Binance, Bitfinex, KuCoin, etc.)
+- kucoin-node-sdk for KuCoin integration
 
 ## Configuration
 - Main config: `sample-config.js` (copy and customize)
@@ -92,7 +93,7 @@ node gekko.js --config config.js --backtest
 - The bot automates YOUR trading strategies - make sure you understand what it will do
 
 ## Web Interface
-When started with `--ui` flag, Gekko launches a web server (default port 3000) where you can:
+When started with `--ui` flag, Gekko launches a web server (port 5000 on Replit) where you can:
 - Configure trading strategies
 - Run backtests
 - Monitor live trading
@@ -100,6 +101,7 @@ When started with `--ui` flag, Gekko launches a web server (default port 3000) w
 - Manage multiple exchange configurations
 
 ## Recent Changes (from fork)
+- Oct 30, 2024: Added KuCoin exchange integration with full trading support
 - Jun 16, 2023: Time graduated acceptable buy and sell strategy
 - May 23, 2023: Pre-crash fix working well with SOL
 - May 16, 2023: Sell after pump, buy below sell strategy
