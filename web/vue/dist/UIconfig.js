@@ -12,9 +12,9 @@ const CONFIG = {
     timeout: 120000 // 2 minutes
   },
   ui: {
-    ssl: false,
-    host: 'localhost',
-    port: 5000,
+    ssl: typeof window !== 'undefined' ? window.location.protocol === 'https:' : false,
+    host: typeof window !== 'undefined' ? window.location.hostname : 'localhost',
+    port: typeof window !== 'undefined' ? window.location.port || 5000 : 5000,
     path: '/'
   },
   adapter: 'sqlite'
