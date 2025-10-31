@@ -111,6 +111,12 @@ Trader.prototype.handleResponse = function(funcName, callback) {
 };
 
 Trader.prototype.getTrades = function(since, callback, descending) {
+  // When importing historical data, use candles endpoint which respects date boundaries
+  // The /market/histories endpoint only returns recent trades regardless of date params
+  if (since && (!this.key || !this.secret || !this.passphrase)) {
+    return this.getTradesFromCandles(since, callback, descending);
+  }
+
   const processResults = (err, data) => {
     if (err) return callback(err);
 
@@ -136,35 +142,21 @@ Trader.prototype.getTrades = function(since, callback, descending) {
     else callback(undefined, parsedTrades);
   };
 
-  let startAt = null;
-  let endAt = null;
-
-  if (since) {
-    startAt = moment(since).valueOf();
-    const endTs = moment(since).add(1, 'h').valueOf();
-    const nowTs = moment().valueOf();
-    endAt = endTs > nowTs ? nowTs : endTs;
-  }
-
   const fetch = cb => {
-    // Use direct HTTP request if no credentials (import mode)
-    if (!this.key || !this.secret || !this.passphrase) {
-      const url = 'https://api.kucoin.com/api/v1/market/histories';
-      const params = { symbol: this.pair };
-      if (startAt) params.startAt = startAt;
-      if (endAt) params.endAt = endAt;
-      
-      request({
-        url: url,
-        qs: params,
-        json: true,
-        headers: { 'User-Agent': 'Gekko' }
-      })
+    // Use SDK if credentials are available
+    if (this.key && this.secret && this.passphrase) {
+      API.rest.Market.Histories.getMarketHistories(this.pair)
         .then(response => cb(null, response))
         .catch(err => cb(err));
     } else {
-      // Use SDK if credentials are available
-      API.rest.Market.Histories.getMarketHistories(this.pair, { startAt, endAt })
+      // For live/recent data without credentials
+      const url = 'https://api.kucoin.com/api/v1/market/histories';
+      request({
+        url: url,
+        qs: { symbol: this.pair },
+        json: true,
+        headers: { 'User-Agent': 'Gekko' }
+      })
         .then(response => cb(null, response))
         .catch(err => cb(err));
     }
@@ -172,6 +164,73 @@ Trader.prototype.getTrades = function(since, callback, descending) {
 
   retry(undefined, fetch, (err, data) => {
     this.handleResponse('getTrades', processResults)(err, data);
+  });
+};
+
+// Get historical trades from candles (respects date boundaries)
+Trader.prototype.getTradesFromCandles = function(since, callback, descending) {
+  const processCandles = (err, data) => {
+    if (err) return callback(err);
+
+    if(!data || !data.data) {
+      return callback(new Error('No candle data returned'));
+    }
+
+    // KuCoin returns candles as: [timestamp, open, close, high, low, volume, turnover]
+    // Convert to trade format
+    var parsedTrades = [];
+    let tid = moment(since).unix() * 1000000; // Generate sequential TIDs
+    
+    _.each(
+      data.data,
+      function(candle) {
+        const timestamp = parseInt(candle[0]);
+        const close = parseFloat(candle[2]);
+        const volume = parseFloat(candle[5]);
+        
+        if (volume > 0) {
+          parsedTrades.push({
+            tid: tid++,
+            date: timestamp,
+            price: close,
+            amount: volume,
+          });
+        }
+      },
+      this
+    );
+
+    // KuCoin returns candles in reverse chronological order, so reverse to get chronological
+    parsedTrades.reverse();
+
+    if (descending) callback(null, parsedTrades.reverse());
+    else callback(undefined, parsedTrades);
+  };
+
+  const startAt = Math.floor(moment(since).valueOf() / 1000);
+  const endAt = Math.floor(moment(since).add(1, 'h').valueOf() / 1000);
+
+  const fetch = cb => {
+    const url = 'https://api.kucoin.com/api/v1/market/candles';
+    const params = {
+      symbol: this.pair,
+      type: '1min',
+      startAt: startAt,
+      endAt: endAt
+    };
+    
+    request({
+      url: url,
+      qs: params,
+      json: true,
+      headers: { 'User-Agent': 'Gekko' }
+    })
+      .then(response => cb(null, response))
+      .catch(err => cb(err));
+  };
+
+  retry(undefined, fetch, (err, data) => {
+    this.handleResponse('getTradesFromCandles', processCandles)(err, data);
   });
 };
 
