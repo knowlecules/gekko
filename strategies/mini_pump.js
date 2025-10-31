@@ -11,9 +11,10 @@
 const { should } = require('chai');
 var log = require('../core/log');
 
-const Broker = require('../exchange/GekkoBroker');
-const states = require('../exchange/orders/states');
-const { tradeAccounts } = require("../SECRET-api-keys.json");
+// GekkoBroker is only needed for live trading, not backtesting
+// const Broker = require('../exchange/GekkoBroker');
+// const states = require('../exchange/orders/states');
+// const { tradeAccounts } = require("../SECRET-api-keys.json");
 
 
 // Let's create our own strat
@@ -31,28 +32,29 @@ strat.init = function () {
   this.trend = {};
   const { currency, exchange, asset } = this.settings;
 
-  if (!exchange) {
+  // Live trading setup disabled for backtesting
+  // if (!exchange) {
     this.pumpState = '';
     this.shouldSell = false;
     this.shouldBuy = false;
     this.buyOnInit = true;
-    return;
-  }
-  const account = tradeAccounts[Object.keys(tradeAccounts)[0]]
-  const { key, secret } = account;
+  //   return;
+  // }
+  // const account = tradeAccounts[Object.keys(tradeAccounts)[0]]
+  // const { key, secret } = account;
 
-  let trader = new Broker({
-    currency,
-    asset,
-    exchange,
-    private: true,
-    key,
-    secret,
-    passphrase: 'z',
-    customInterval: 100
-  });
-  traders.push(trader);
-  trader.sync(console.log);
+  // let trader = new Broker({
+  //   currency,
+  //   asset,
+  //   exchange,
+  //   private: true,
+  //   key,
+  //   secret,
+  //   passphrase: 'z',
+  //   customInterval: 100
+  // });
+  // traders.push(trader);
+  // trader.sync(console.log);
 }
 
 // what happens on every new candle?
