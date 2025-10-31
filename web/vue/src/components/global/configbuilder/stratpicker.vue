@@ -42,9 +42,9 @@ export default {
       strategies: [],
 
       candleSizeUnit: 'minutes',
-      rawCandleSize: 30,
+      rawCandleSize: 15,
 
-      strategy: 'mini_pump',
+      strategy: 'plateau_seeker',
       historySize: 10,
 
       rawStratParams: '',
