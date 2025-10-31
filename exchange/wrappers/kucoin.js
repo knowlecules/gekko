@@ -32,21 +32,25 @@ const Trader = function(config) {
   });
 
   // Initialize KuCoin API
-  API.init({
+  const apiConfig = {
     baseUrl: 'https://api.kucoin.com',
-    apiAuth: {
+  };
+
+  // Add authentication if credentials are provided
+  if(this.key && this.secret && this.passphrase) {
+    apiConfig.apiAuth = {
       key: this.key,
       secret: this.secret,
       passphrase: this.passphrase,
-    },
-    authVersion: 2
-  });
-
-  if(config.key && config.secret && config.passphrase) {
+    };
+    apiConfig.authVersion = 2;
+    
     this.fee = 0.001; // Default KuCoin fee (0.1%)
     this.getFee(_.noop);
     this.oldOrder = false;
   }
+
+  API.init(apiConfig);
 };
 
 const recoverableErrors = [
@@ -152,6 +156,11 @@ Trader.prototype.getTrades = function(since, callback, descending) {
 };
 
 Trader.prototype.getPortfolio = function(callback) {
+  // getPortfolio requires authentication
+  if (!this.key || !this.secret || !this.passphrase) {
+    return callback(new Error('getPortfolio requires API credentials'));
+  }
+
   const setBalance = (err, data) => {
     if (err) return callback(err);
 
@@ -195,6 +204,12 @@ Trader.prototype.getPortfolio = function(callback) {
 };
 
 Trader.prototype.getFee = function(callback) {
+  // getFee requires authentication
+  if (!this.key || !this.secret || !this.passphrase) {
+    this.fee = 0.001; // Use default fee when no credentials
+    return callback(undefined, this.fee);
+  }
+
   const handle = (err, data) => {
     if(err)  {
       return callback(err);
@@ -307,6 +322,11 @@ Trader.prototype.outbidPrice = function(price, isUp) {
 }
 
 Trader.prototype.addOrder = function(tradeType, amount, price, callback) {
+  // addOrder requires authentication
+  if (!this.key || !this.secret || !this.passphrase) {
+    return callback(new Error('Trading requires API credentials'));
+  }
+
   const setOrder = (err, data) => {
     if (err) return callback(err);
 
@@ -340,6 +360,11 @@ Trader.prototype.addOrder = function(tradeType, amount, price, callback) {
 };
 
 Trader.prototype.getOrder = function(order, callback) {
+  // getOrder requires authentication
+  if (!this.key || !this.secret || !this.passphrase) {
+    return callback(new Error('Trading requires API credentials'));
+  }
+
   const get = (err, data) => {
     if (err) return callback(err);
 
@@ -386,6 +411,11 @@ Trader.prototype.sell = function(amount, price, callback) {
 };
 
 Trader.prototype.checkOrder = function(order, callback) {
+  // checkOrder requires authentication
+  if (!this.key || !this.secret || !this.passphrase) {
+    return callback(new Error('Trading requires API credentials'));
+  }
+
   const check = (err, data) => {
     if(err)
       return callback(err);
@@ -425,6 +455,11 @@ Trader.prototype.checkOrder = function(order, callback) {
 };
 
 Trader.prototype.cancelOrder = function(order, callback) {
+  // cancelOrder requires authentication
+  if (!this.key || !this.secret || !this.passphrase) {
+    return callback(new Error('Trading requires API credentials'));
+  }
+
   const cancel = (err, data) => {
     this.oldOrder = order;
 
