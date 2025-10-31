@@ -65,7 +65,7 @@ export default {
         return alert('You can only import at least one day of data..')
 
       let exchange = this.$store.state.exchanges[this.config.watch.exchange];
-      if ("exchangeMaxHistoryAge" in exchange) {
+      if (exchange && "exchangeMaxHistoryAge" in exchange) {
         if (moment(this.config.importer.daterange.from) < moment().subtract(exchange.exchangeMaxHistoryAge, "days")) {
           return alert('Your date from is too old for ' + this.config.watch.exchange + '. It supports only the last ' + exchange.exchangeMaxHistoryAge + ' days..');
         }
