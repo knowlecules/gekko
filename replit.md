@@ -86,7 +86,8 @@ node gekko.js --config config.js --backtest
 - **Real trading**: DISABLED (for safety)
 - **Exchange**: KuCoin (with API credentials stored in environment variables)
 - **Trading pair**: BTC/USDT
-- **Strategy**: MACD (default)
+- **Strategy**: Plateau Seeker (default)
+- **Candle size**: 15 minutes
 - **Starting balance**: 1 BTC + 100 USDT (simulated)
 
 ### 📦 Dependencies Status
