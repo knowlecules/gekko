@@ -1,6 +1,7 @@
 const moment = require('moment');
 const _ = require('lodash');
 const API = require('kucoin-node-sdk');
+const request = require('request-promise');
 
 const Errors = require('../exchangeErrors');
 const marketData = require('./kucoin-markets.json');
@@ -31,26 +32,27 @@ const Trader = function(config) {
     return market.pair[0] === this.currency && market.pair[1] === this.asset
   });
 
-  // Initialize KuCoin API
-  const apiConfig = {
-    baseUrl: 'https://api.kucoin.com',
-  };
-
-  // Add authentication if credentials are provided
+  // Only initialize KuCoin API SDK if credentials are provided
   if(this.key && this.secret && this.passphrase) {
-    apiConfig.apiAuth = {
-      key: this.key,
-      secret: this.secret,
-      passphrase: this.passphrase,
+    const apiConfig = {
+      baseUrl: 'https://api.kucoin.com',
+      apiAuth: {
+        key: this.key,
+        secret: this.secret,
+        passphrase: this.passphrase,
+      },
+      authVersion: 2,
     };
-    apiConfig.authVersion = 2;
+    
+    API.init(apiConfig);
     
     this.fee = 0.001; // Default KuCoin fee (0.1%)
     this.getFee(_.noop);
     this.oldOrder = false;
+  } else {
+    // For import mode without credentials, we'll use direct HTTP requests
+    this.fee = 0.001; // Default fee for import mode
   }
-
-  API.init(apiConfig);
 };
 
 const recoverableErrors = [
@@ -145,9 +147,27 @@ Trader.prototype.getTrades = function(since, callback, descending) {
   }
 
   const fetch = cb => {
-    API.rest.Market.Histories.getMarketHistories(this.pair, { startAt, endAt })
-      .then(response => cb(null, response))
-      .catch(err => cb(err));
+    // Use direct HTTP request if no credentials (import mode)
+    if (!this.key || !this.secret || !this.passphrase) {
+      const url = 'https://api.kucoin.com/api/v1/market/histories';
+      const params = { symbol: this.pair };
+      if (startAt) params.startAt = startAt;
+      if (endAt) params.endAt = endAt;
+      
+      request({
+        url: url,
+        qs: params,
+        json: true,
+        headers: { 'User-Agent': 'Gekko' }
+      })
+        .then(response => cb(null, response))
+        .catch(err => cb(err));
+    } else {
+      // Use SDK if credentials are available
+      API.rest.Market.Histories.getMarketHistories(this.pair, { startAt, endAt })
+        .then(response => cb(null, response))
+        .catch(err => cb(err));
+    }
   };
 
   retry(undefined, fetch, (err, data) => {
