@@ -45,7 +45,7 @@ export default {
       rawCandleSize: 15,
 
       strategy: 'plateau_seeker',
-      historySize: 10,
+      historySize: 12,
 
       rawStratParams: '',
       rawStratParamsError: false,

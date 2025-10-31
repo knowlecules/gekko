@@ -16,11 +16,11 @@ trade_amount_percentage = 10
 # Number of candles that must show stability to confirm a plateau
 # Lower values = faster reaction but may trigger on false plateaus
 # Higher values = more confirmation but slower to react
-plateau_candles_count = 6
+plateau_candles_count = 4
 
 # Maximum price change (%) per candle to be considered "stable" during plateau
 # Lower values = stricter plateau detection
-plateau_threshold = 0.3
+plateau_threshold = 0.5
 
 # --- MINI DUMP Detection (triggers BUY opportunity) ---
 # Number of candles to check for a significant price drop
@@ -28,7 +28,7 @@ mini_dump_candles = 12
 
 # Percentage drop required to be considered a "mini dump"
 # After this drop, wait for plateau then buy
-mini_dump_percentage = 2.0
+mini_dump_percentage = 1.5
 
 # --- MINI PUMP Detection (triggers SELL opportunity) ---
 # Number of candles to check for a significant price rise
@@ -36,7 +36,7 @@ mini_pump_candles = 12
 
 # Percentage rise required to be considered a "mini pump"
 # After this pump, wait for plateau then sell
-mini_pump_percentage = 2.5
+mini_pump_percentage = 2.0
 
 # --- SELL Limit Configuration (after mini pump) ---
 # Percentage of plateau range from bottom where sell limit is set
