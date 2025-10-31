@@ -59,6 +59,20 @@ method.init = function() {
     position: 'flat'  // 'long', 'short', or 'flat'
   };
 
+  // Tranche tracking for position sizing
+  this.tranches = {
+    total_investment: this.settings.investment,
+    tranche_size: (this.settings.investment * this.settings.trade_amount_percentage) / 100,
+    long_tranches: 0,   // Number of buy tranches executed
+    short_tranches: 0,  // Number of sell tranches executed
+    max_tranches: Math.floor(100 / this.settings.trade_amount_percentage)
+  };
+
+  log.info('[Plateau Seeker] Tranche configuration:');
+  log.info('  - Total investment:', this.tranches.total_investment);
+  log.info('  - Per trade:', this.tranches.tranche_size, '(' + this.settings.trade_amount_percentage + '%)');
+  log.info('  - Max consecutive trades:', this.tranches.max_tranches);
+
   // Rolling window of candles for analysis
   this.candle_history = [];
   this.max_history = Math.max(
@@ -102,6 +116,9 @@ method.update = function(candle) {
   // Detect mini pump
   const pumpDetected = this.detectMiniPump();
   if (pumpDetected && !this.state.detected_pump) {
+    // Reset tranche counters for new pump cycle
+    this.tranches.short_tranches = 0;
+    
     this.state.detected_pump = true;
     this.state.detected_dump = false;
     this.state.pump_high = currentPrice;
@@ -113,6 +130,9 @@ method.update = function(candle) {
   // Detect mini dump
   const dumpDetected = this.detectMiniDump();
   if (dumpDetected && !this.state.detected_dump) {
+    // Reset tranche counters for new dump cycle
+    this.tranches.long_tranches = 0;
+    
     this.state.detected_dump = true;
     this.state.detected_pump = false;
     this.state.dump_low = currentPrice;
@@ -128,29 +148,67 @@ method.update = function(candle) {
 };
 
 // Detect if price has risen by mini_pump_percentage over mini_pump_candles
+// Must find low BEFORE high to ensure upward movement (not just volatility)
 method.detectMiniPump = function() {
   if (this.candle_history.length < this.settings.mini_pump_candles) {
     return false;
   }
 
   const recentCandles = this.candle_history.slice(-this.settings.mini_pump_candles);
-  const startPrice = recentCandles[0].close;
-  const endPrice = recentCandles[recentCandles.length - 1].close;
-  const percentChange = ((endPrice - startPrice) / startPrice) * 100;
+  
+  // Find the lowest low and its index
+  let lowestLow = Infinity;
+  let lowestIndex = -1;
+  for (let i = 0; i < recentCandles.length; i++) {
+    if (recentCandles[i].low < lowestLow) {
+      lowestLow = recentCandles[i].low;
+      lowestIndex = i;
+    }
+  }
+  
+  // Find the highest high AFTER the lowest low
+  let highestHigh = -Infinity;
+  for (let i = lowestIndex; i < recentCandles.length; i++) {
+    if (recentCandles[i].high > highestHigh) {
+      highestHigh = recentCandles[i].high;
+    }
+  }
+  
+  // Calculate rise from low to subsequent high
+  const percentChange = ((highestHigh - lowestLow) / lowestLow) * 100;
 
   return percentChange >= this.settings.mini_pump_percentage;
 };
 
 // Detect if price has dropped by mini_dump_percentage over mini_dump_candles
+// Must find high BEFORE low to ensure downward movement (not just volatility)
 method.detectMiniDump = function() {
   if (this.candle_history.length < this.settings.mini_dump_candles) {
     return false;
   }
 
   const recentCandles = this.candle_history.slice(-this.settings.mini_dump_candles);
-  const startPrice = recentCandles[0].close;
-  const endPrice = recentCandles[recentCandles.length - 1].close;
-  const percentChange = ((endPrice - startPrice) / startPrice) * 100;
+  
+  // Find the highest high and its index
+  let highestHigh = -Infinity;
+  let highestIndex = -1;
+  for (let i = 0; i < recentCandles.length; i++) {
+    if (recentCandles[i].high > highestHigh) {
+      highestHigh = recentCandles[i].high;
+      highestIndex = i;
+    }
+  }
+  
+  // Find the lowest low AFTER the highest high
+  let lowestLow = Infinity;
+  for (let i = highestIndex; i < recentCandles.length; i++) {
+    if (recentCandles[i].low < lowestLow) {
+      lowestLow = recentCandles[i].low;
+    }
+  }
+  
+  // Calculate drop from high to subsequent low
+  const percentChange = ((lowestLow - highestHigh) / highestHigh) * 100;
 
   return percentChange <= -this.settings.mini_dump_percentage;
 };
@@ -177,13 +235,31 @@ method.updatePlateauTracking = function(currentPrice, priceChange) {
       this.setTradeLimits();
     }
   } else {
-    // Reset plateau tracking if price becomes unstable
+    // Reset ALL plateau state if price becomes unstable before confirmation
+    // This prevents stale limits from executing
     if (this.state.plateau_count < this.settings.plateau_candles_count) {
-      this.state.plateau_count = 0;
-      this.state.plateau_high = currentPrice;
-      this.state.plateau_low = currentPrice;
+      this.resetPlateauState();
+    } else if (this.state.in_plateau) {
+      // If already in confirmed plateau but volatility returns, invalidate everything
+      this.resetPlateauState();
     }
   }
+};
+
+// Reset all plateau-related state to prevent stale orders
+method.resetPlateauState = function() {
+  this.state.detected_pump = false;
+  this.state.detected_dump = false;
+  this.state.in_plateau = false;
+  this.state.plateau_count = 0;
+  this.state.plateau_high = 0;
+  this.state.plateau_low = 0;
+  this.state.sell_limit = 0;
+  this.state.buy_limit = 0;
+  
+  // Reset tranche counters so new pump/dump cycles can execute trades
+  this.tranches.long_tranches = 0;
+  this.tranches.short_tranches = 0;
 };
 
 // Set buy/sell limits based on plateau boundaries
@@ -219,19 +295,23 @@ method.check = function() {
   const currentPrice = this.candle_history[this.candle_history.length - 1].close;
 
   // Check for sell signal (after pump, during plateau)
+  // Can execute multiple sell tranches if limit continues to be met
   if (this.state.detected_pump && 
       this.state.in_plateau && 
-      this.state.sell_limit > 0 &&
-      this.state.position !== 'short') {
+      this.state.sell_limit > 0) {
     
-    if (currentPrice >= this.state.sell_limit) {
-      log.warn('[Plateau Seeker] SELL signal at', currentPrice.toFixed(2), 
-        '(limit:', this.state.sell_limit.toFixed(2), ')');
+    if (currentPrice >= this.state.sell_limit && 
+        this.tranches.short_tranches < this.tranches.max_tranches) {
+      
+      this.tranches.short_tranches++;
+      const trancheNumber = this.tranches.short_tranches;
+      
+      log.warn('[Plateau Seeker] SELL signal (tranche', trancheNumber + '/' + this.tranches.max_tranches + ')',
+        'at', currentPrice.toFixed(2), 
+        '(limit:', this.state.sell_limit.toFixed(2), ')',
+        'Amount:', this.tranches.tranche_size.toFixed(2));
       
       this.state.position = 'short';
-      this.state.detected_pump = false;
-      this.state.in_plateau = false;
-      this.state.sell_limit = 0;
       
       this.trend = {
         direction: 'short',
@@ -242,26 +322,40 @@ method.check = function() {
       
       if (!this.trend.adviced) {
         this.trend.adviced = true;
-        this.advice('short');
+        
+        // Include tranche size information in the advice
+        // Note: Gekko's advice system doesn't natively support position sizing,
+        // but we log it for paper trading and future implementation
+        this.advice({
+          direction: 'short',
+          trigger: {
+            type: 'trailingStop',
+            trailPercentage: this.settings.trade_amount_percentage
+          }
+        });
         return;
       }
     }
   }
 
   // Check for buy signal (after dump, during plateau)
+  // Can execute multiple buy tranches if limit continues to be met
   if (this.state.detected_dump && 
       this.state.in_plateau && 
-      this.state.buy_limit > 0 &&
-      this.state.position !== 'long') {
+      this.state.buy_limit > 0) {
     
-    if (currentPrice <= this.state.buy_limit) {
-      log.warn('[Plateau Seeker] BUY signal at', currentPrice.toFixed(2), 
-        '(limit:', this.state.buy_limit.toFixed(2), ')');
+    if (currentPrice <= this.state.buy_limit && 
+        this.tranches.long_tranches < this.tranches.max_tranches) {
+      
+      this.tranches.long_tranches++;
+      const trancheNumber = this.tranches.long_tranches;
+      
+      log.warn('[Plateau Seeker] BUY signal (tranche', trancheNumber + '/' + this.tranches.max_tranches + ')',
+        'at', currentPrice.toFixed(2), 
+        '(limit:', this.state.buy_limit.toFixed(2), ')',
+        'Amount:', this.tranches.tranche_size.toFixed(2));
       
       this.state.position = 'long';
-      this.state.detected_dump = false;
-      this.state.in_plateau = false;
-      this.state.buy_limit = 0;
       
       this.trend = {
         direction: 'long',
@@ -272,7 +366,15 @@ method.check = function() {
       
       if (!this.trend.adviced) {
         this.trend.adviced = true;
-        this.advice('long');
+        
+        // Include tranche size information in the advice
+        this.advice({
+          direction: 'long',
+          trigger: {
+            type: 'trailingStop',
+            trailPercentage: this.settings.trade_amount_percentage
+          }
+        });
         return;
       }
     }
