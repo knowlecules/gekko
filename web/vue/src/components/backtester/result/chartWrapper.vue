@@ -89,9 +89,34 @@ export default {
   clip-path: url(#clip);
 }
 
-/*#chart .price.line {
-  stroke-width: 2.5px;
-}*/
+/* Candlestick styles */
+#chart .wick,
+#chart .wick-mini {
+  stroke: #333;
+  stroke-width: 1;
+}
+
+#chart .candle-body.up {
+  fill: #26a69a;
+  stroke: #26a69a;
+  stroke-width: 1;
+}
+
+#chart .candle-body.down {
+  fill: #ef5350;
+  stroke: #ef5350;
+  stroke-width: 1;
+}
+
+#chart .candle-body-mini.up {
+  fill: #26a69a;
+  stroke: #26a69a;
+}
+
+#chart .candle-body-mini.down {
+  fill: #ef5350;
+  stroke: #ef5350;
+}
 
 #chart circle.buy {
   fill: #7FFF00;
