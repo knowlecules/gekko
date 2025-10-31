@@ -1,0 +1,53 @@
+# Plateau Seeker Strategy Configuration
+#
+# This strategy identifies market pumps and dumps, then waits for the market
+# to plateau (stabilize) before executing trades at optimal limit prices.
+#
+# Strategy trades in tranches (trade_amount_percentage of total investment)
+# to allow multiple consecutive buys or sells.
+
+# Total investment amount (used for calculating trade amounts)
+investment = 10000
+
+# Percentage of investment to use per trade (allows for multiple trades)
+# Default: 10% allows for 10 consecutive trades in the same direction
+trade_amount_percentage = 10
+
+# Number of candles that must show stability to confirm a plateau
+# Lower values = faster reaction but may trigger on false plateaus
+# Higher values = more confirmation but slower to react
+plateau_candles_count = 6
+
+# Maximum price change (%) per candle to be considered "stable" during plateau
+# Lower values = stricter plateau detection
+plateau_threshold = 0.3
+
+# --- MINI DUMP Detection (triggers BUY opportunity) ---
+# Number of candles to check for a significant price drop
+mini_dump_candles = 12
+
+# Percentage drop required to be considered a "mini dump"
+# After this drop, wait for plateau then buy
+mini_dump_percentage = 2.0
+
+# --- MINI PUMP Detection (triggers SELL opportunity) ---
+# Number of candles to check for a significant price rise
+mini_pump_candles = 12
+
+# Percentage rise required to be considered a "mini pump"
+# After this pump, wait for plateau then sell
+mini_pump_percentage = 2.5
+
+# --- SELL Limit Configuration (after mini pump) ---
+# Percentage of plateau range from bottom where sell limit is set
+# 90% = sell limit is at 90% of the way from bottom to top of plateau
+# Higher % = closer to plateau top (more aggressive)
+# Lower % = closer to plateau bottom (more conservative)
+sell_plateau_percentage = 90
+
+# --- BUY Limit Configuration (after mini dump) ---
+# Percentage of plateau range from top where buy limit is set
+# 90% = buy limit is at 90% of the way from top to bottom of plateau
+# Higher % = closer to plateau bottom (more aggressive)
+# Lower % = closer to plateau top (more conservative)
+buy_plateau_percentage = 90

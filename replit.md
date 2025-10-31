@@ -22,9 +22,27 @@ This is a Bitcoin/cryptocurrency trading bot built with Node.js that connects to
 
 ## Custom Strategies
 This fork includes custom trading strategies:
+- **Plateau Seeker** (NEW) - Advanced strategy that detects market pumps/dumps and trades during plateau phases
+- **mini_pump** - Sell after pump / Buy below sell logic
 - Time graduated acceptable buy and sell
 - Pre-crash fix optimized for SOL
-- Sell after pump / Buy below sell logic
+
+### Plateau Seeker Strategy
+The Plateau Seeker strategy is designed to capitalize on market stabilization periods after significant price movements:
+
+**How it works:**
+1. Detects "mini pumps" (price rises by 2.5% over 12 candles)
+2. Waits for market to plateau (stabilize for 6 candles)
+3. Sets sell limit at 90% of plateau upper boundary
+4. Detects "mini dumps" (price drops by 2% over 12 candles)
+5. Waits for market to plateau
+6. Sets buy limit at 90% of plateau lower boundary
+
+**Key features:**
+- Uses tranches (10% of investment per trade) for multiple consecutive trades
+- Avoids buying too soon or selling too late with preset limits
+- Performs well in both bull and bear markets
+- All parameters configurable in `config/strategies/plateau_seeker.toml`
 
 ## Development Environment
 - Node.js version: >= 8.11.2 (required)
@@ -101,6 +119,9 @@ When started with `--ui` flag, Gekko launches a web server (port 5000 on Replit)
 - Manage multiple exchange configurations
 
 ## Recent Changes (from fork)
+- Oct 31, 2025: Created Plateau Seeker strategy for plateau-based trading
+- Oct 31, 2025: Fixed mini_pump strategy to work in backtest mode
+- Oct 31, 2025: Fixed KuCoin date boundary handling for historical imports
 - Oct 30, 2024: Added KuCoin exchange integration with full trading support
 - Jun 16, 2023: Time graduated acceptable buy and sell strategy
 - May 23, 2023: Pre-crash fix working well with SOL
