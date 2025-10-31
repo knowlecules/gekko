@@ -29,10 +29,10 @@ Checker.prototype.cantMonitor = function(conf) {
 
   var name = exchange.name;
 
-  if(!_.includes(exchange.currencies, conf.currency))
+  if(!_.contains(exchange.currencies, conf.currency))
     return 'Gekko only supports the currencies [ ' + exchange.currencies.join(', ') + ' ] at ' + name + ' (not ' + conf.currency + ')';
 
-  if(!_.includes(exchange.assets, conf.asset))
+  if(!_.contains(exchange.assets, conf.asset))
     return 'Gekko only supports the assets [ ' + exchange.assets.join(', ') + ' ]  at ' + name + ' (not ' + conf.asset + ')';
 
   var pair = _.find(exchange.markets, function(p) {
