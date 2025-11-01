@@ -63,15 +63,17 @@ method.init = function() {
   this.tranches = {
     total_investment: this.settings.investment,
     tranche_size: (this.settings.investment * this.settings.trade_amount_percentage) / 100,
-    long_tranches: 0,   // Number of buy tranches executed
-    short_tranches: 0,  // Number of sell tranches executed
-    max_tranches: Math.floor(100 / this.settings.trade_amount_percentage)
+    long_tranches: 0,   // Number of buy tranches executed in current cycle
+    short_tranches: 0,  // Number of sell tranches executed in current cycle
+    max_tranches: Math.floor(100 / this.settings.trade_amount_percentage),
+    total_buy_tranches: 0,  // Total buys across all cycles
+    total_sell_tranches: 0  // Total sells across all cycles
   };
 
   log.info('[Plateau Seeker] Tranche configuration:');
   log.info('  - Total investment:', this.tranches.total_investment);
-  log.info('  - Per trade:', this.tranches.tranche_size, '(' + this.settings.trade_amount_percentage + '%)');
-  log.info('  - Max consecutive trades:', this.tranches.max_tranches);
+  log.info('  - Per trade amount:', this.tranches.tranche_size, '(' + this.settings.trade_amount_percentage + '% of investment)');
+  log.info('  - Max consecutive trades per cycle:', this.tranches.max_tranches);
 
   // Rolling window of candles for analysis
   this.candle_history = [];
@@ -257,7 +259,7 @@ method.resetPlateauState = function() {
   this.state.sell_limit = 0;
   this.state.buy_limit = 0;
   
-  // Reset tranche counters so new pump/dump cycles can execute trades
+  // Reset cycle-specific tranche counters (allows new cycle to execute max_tranches)
   this.tranches.long_tranches = 0;
   this.tranches.short_tranches = 0;
 };
@@ -304,12 +306,16 @@ method.check = function() {
         this.tranches.short_tranches < this.tranches.max_tranches) {
       
       this.tranches.short_tranches++;
+      this.tranches.total_sell_tranches++;
       const trancheNumber = this.tranches.short_tranches;
+      const remainingCapacity = this.tranches.max_tranches - this.tranches.short_tranches;
       
       log.warn('[Plateau Seeker] SELL signal (tranche', trancheNumber + '/' + this.tranches.max_tranches + ')',
         'at', currentPrice.toFixed(2), 
         '(limit:', this.state.sell_limit.toFixed(2), ')',
-        'Amount:', this.tranches.tranche_size.toFixed(2));
+        'Amount:', this.tranches.tranche_size.toFixed(2),
+        '(' + this.settings.trade_amount_percentage + '% of investment)',
+        '| Remaining capacity:', remainingCapacity, 'tranches');
       
       this.state.position = 'short';
       
@@ -348,12 +354,16 @@ method.check = function() {
         this.tranches.long_tranches < this.tranches.max_tranches) {
       
       this.tranches.long_tranches++;
+      this.tranches.total_buy_tranches++;
       const trancheNumber = this.tranches.long_tranches;
+      const remainingCapacity = this.tranches.max_tranches - this.tranches.long_tranches;
       
       log.warn('[Plateau Seeker] BUY signal (tranche', trancheNumber + '/' + this.tranches.max_tranches + ')',
         'at', currentPrice.toFixed(2), 
         '(limit:', this.state.buy_limit.toFixed(2), ')',
-        'Amount:', this.tranches.tranche_size.toFixed(2));
+        'Amount:', this.tranches.tranche_size.toFixed(2),
+        '(' + this.settings.trade_amount_percentage + '% of investment)',
+        '| Remaining capacity:', remainingCapacity, 'tranches');
       
       this.state.position = 'long';
       
@@ -388,6 +398,7 @@ method.log = function() {
   if (this.candle_history.length === 0) return;
 
   const currentPrice = this.candle_history[this.candle_history.length - 1].close;
+  const currentCycleTranches = this.tranches.long_tranches + this.tranches.short_tranches;
   
   log.debug('[Plateau Seeker] Price:', currentPrice.toFixed(2),
     '| Pump:', this.state.detected_pump,
@@ -395,7 +406,24 @@ method.log = function() {
     '| Plateau:', this.state.in_plateau,
     '| Count:', this.state.plateau_count,
     '| Sell@:', this.state.sell_limit.toFixed(2),
-    '| Buy@:', this.state.buy_limit.toFixed(2));
+    '| Buy@:', this.state.buy_limit.toFixed(2),
+    '| Cycle tranches:', currentCycleTranches + '/' + this.tranches.max_tranches);
+};
+
+// End of backtest summary
+method.end = function() {
+  const totalTrades = this.tranches.total_buy_tranches + this.tranches.total_sell_tranches;
+  const totalTraded = totalTrades * this.tranches.tranche_size;
+  
+  log.info('[Plateau Seeker] ========== BACKTEST SUMMARY ==========');
+  log.info('  - Total Investment:', this.tranches.total_investment.toFixed(2));
+  log.info('  - Trade Size (per tranche):', this.tranches.tranche_size.toFixed(2),
+    '(' + this.settings.trade_amount_percentage + '% of investment)');
+  log.info('  - Total Tranches Executed:', totalTrades, 
+    '(Buys:', this.tranches.total_buy_tranches, '| Sells:', this.tranches.total_sell_tranches + ')');
+  log.info('  - Total Amount Traded:', totalTraded.toFixed(2));
+  log.info('  - Current Cycle - Buys:', this.tranches.long_tranches, '| Sells:', this.tranches.short_tranches);
+  log.info('[Plateau Seeker] =======================================');
 };
 
 module.exports = method;
