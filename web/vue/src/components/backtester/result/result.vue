@@ -3,7 +3,7 @@
     .hr.contain
     div.contain
       h3 Backtest result
-    result-summary(:report='result.performanceReport')
+    result-summary(:report='enhancedReport')
     .hr.contain
     chart(:data='candles', height='500')
     .hr.contain
@@ -31,6 +31,12 @@ export default {
       return {
         candles: this.result.stratCandles,
         trades: this.result.trades
+      };
+    },
+    enhancedReport: function() {
+      return {
+        ...this.result.performanceReport,
+        strategyParameters: this.result.strategyParameters
       };
     }
   }

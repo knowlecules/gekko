@@ -4,6 +4,12 @@
     tr
       th amount of trades
       td {{ report.trades }}
+    tr(v-if='tradeSize')
+      th trade size (per tranche)
+      td {{ round(tradeSize) }} {{ report.currency }}
+    tr(v-if='tradeSize')
+      th total amount traded
+      td {{ round(totalTraded) }} {{ report.currency }}
     tr
       th sharpe ratio
       td {{ round2(report.sharpe) }}
@@ -34,6 +40,20 @@ export default {
         return 'profit'
       else
         return 'loss'
+    },
+    tradeSize: function() {
+      if(this.report.strategyParameters && this.report.strategyParameters.trade_amount_percentage) {
+        const percentage = this.report.strategyParameters.trade_amount_percentage;
+        const investment = this.report.strategyParameters.investment || this.report.startBalance;
+        return (investment * percentage) / 100;
+      }
+      return null;
+    },
+    totalTraded: function() {
+      if(this.tradeSize && this.report.trades) {
+        return this.tradeSize * this.report.trades;
+      }
+      return 0;
     }
   }
 }
