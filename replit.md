@@ -120,6 +120,11 @@ When started with `--ui` flag, Gekko launches a web server (port 5000 on Replit)
 - Manage multiple exchange configurations
 
 ## Recent Changes (from fork)
+- Nov 18, 2025: **Added capital tracking UI fields** - Trade size per tranche and total amount traded now display in backtest results
+  - NOTE: Vue dist files (web/vue/dist/app.143ff585.js) manually patched as stopgap. For proper rebuild run: `cd web/vue && npm install --legacy-peer-deps && npm run build`
+- Nov 18, 2025: Converted backtest charts to candlestick visualization using D3.js
+- Nov 18, 2025: Relaxed plateau detection thresholds (0.3% → 0.5%, 6 → 4 candles) for more trades
+- Nov 18, 2025: Adjusted pump/dump sensitivity (pump 2.5% → 2.0%, dump 2.0% → 1.5%)
 - Oct 31, 2025: Created Plateau Seeker strategy for plateau-based trading
 - Oct 31, 2025: Fixed mini_pump strategy to work in backtest mode
 - Oct 31, 2025: Fixed KuCoin date boundary handling for historical imports
