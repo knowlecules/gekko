@@ -92,6 +92,10 @@ Reader.prototype.tableExists = function(name, next) {
 }
 
 Reader.prototype.get = function(from, to, what, next) {
+  if(!this.db) {
+    return next(null, []);
+  }
+  
   if(what === 'full')
     what = '*';
 
