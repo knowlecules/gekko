@@ -122,6 +122,7 @@ When started with `--ui` flag, Gekko launches a web server (port 5000 on Replit)
 - Manage multiple exchange configurations
 
 ## Recent Changes (from fork)
+- Dec 26, 2025: **Chart tooltips on trade markers** - Mouseover buy/sell markers to see strategy state that triggered the trade, including trigger reason, trade percentage, capital used, and plateau detection state
 - Dec 26, 2025: **Initial trade = 50% of investment** - First trade uses 50%, subsequent trades use 10% each
 - Dec 26, 2025: **Separate asset/currency balance display** - Backtest results now show "start asset balance" and "start currency balance" instead of combined "start balance"
 - Nov 18, 2025: **Added capital tracking UI fields** - Trade size per tranche and total amount traded now display in backtest results
