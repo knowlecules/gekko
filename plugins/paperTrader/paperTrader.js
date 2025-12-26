@@ -179,7 +179,8 @@ PaperTrader.prototype.processAdvice = function(advice) {
     balance: this.getBalance(),
     date: advice.date,
     effectivePrice,
-    feePercent: this.rawFee
+    feePercent: this.rawFee,
+    strategyState: advice.strategyState || null
   });
 }
 
