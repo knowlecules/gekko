@@ -18,6 +18,8 @@ const BacktestResultExporter = function() {
 
   this.candleProps = config.backtestResultExporter.data.stratCandleProps;
 
+  log.info('[BacktestExporter] Initializing with config.data.trades =', config.backtestResultExporter.data.trades);
+
   if(!config.backtestResultExporter.data.stratUpdates)
     this.processStratUpdate = null;
 
@@ -30,8 +32,12 @@ const BacktestResultExporter = function() {
   if(!config.backtestResultExporter.data.portfolioValues)
     this.processPortfolioValueChange = null;
 
-  if(!config.backtestResultExporter.data.trades)
+  if(!config.backtestResultExporter.data.trades) {
+    log.warn('[BacktestExporter] trades disabled - processTradeCompleted will be null');
     this.processTradeCompleted = null;
+  } else {
+    log.info('[BacktestExporter] trades enabled - processTradeCompleted is active');
+  }
 
   _.bindAll(this);
 }
