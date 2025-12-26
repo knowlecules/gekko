@@ -5,6 +5,8 @@ export default function(_data, _trades, _height) {
 
   console.log('[Chart4] Received trades:', _trades ? _trades.length : 'null/undefined', _trades);
   console.log('[Chart4] Received candles:', _data ? _data.length : 'null/undefined');
+  console.log('[Chart4] Height:', _height);
+  console.log('[Chart4] First candle:', _data && _data.length > 0 ? _data[0] : 'none');
 
   const toDate = i => {
     if(_.isNumber(i)) {
@@ -91,6 +93,11 @@ export default function(_data, _trades, _height) {
   ]);
   x2.domain(x.domain());
   y2.domain(y.domain());
+  
+  console.log('[Chart4] X domain:', x.domain());
+  console.log('[Chart4] Y domain:', y.domain());
+  console.log('[Chart4] Width:', width, 'Height:', height);
+  console.log('[Chart4] Candle width:', candleWidth);
 
   // Draw candlesticks in focus (main chart)
   var candleGroups = focus.append("g")
