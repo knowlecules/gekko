@@ -16,16 +16,20 @@ export default function(_data, _trades, _height) {
     }
   }
 
-  const trades = _trades.map(t => {
+  const trades = _trades.map((t, i) => {
     return {
       price: t.price,
       date: toDate(t.date),
       action: t.action,
-      strategyState: t.strategyState || null
+      strategyState: t.strategyState || null,
+      index: i
     }
   });
   
   console.log('[Chart4] Processed trades:', trades.length, trades);
+  trades.forEach((t, i) => {
+    console.log('[Chart4] Trade ' + i + ': date=' + t.date + ', price=' + t.price + ', action=' + t.action);
+  });
 
   const data = _data.map(c => {
     return {
@@ -210,17 +214,35 @@ export default function(_data, _trades, _height) {
     return content;
   }
 
+  // Log computed circle positions
+  trades.forEach((t, i) => {
+    console.log('[Chart4] Circle ' + i + ' at x=' + x(t.date).toFixed(2) + ', y=' + y(t.price).toFixed(2));
+  });
+
   var circles = svg
     .append('g')
+    .attr("class", "trade-circles")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
       .selectAll("circle")
       .data(trades)
       .enter().append("circle")
         .attr('class', function(d) { return d.action })
-        .attr("cx", function(d) { return x(d.date); })
-        .attr("cy", function(d) { return y(d.price); })
-        .attr('r', 5)
+        .attr("cx", function(d) { 
+          // Add small horizontal offset for overlapping trades
+          var baseX = x(d.date);
+          var offset = (d.index % 3 - 1) * 8; // -8, 0, or +8 pixels
+          return baseX + offset;
+        })
+        .attr("cy", function(d) { 
+          // Add small vertical offset for overlapping trades
+          var baseY = y(d.price);
+          var offset = Math.floor(d.index / 3) * 12; // 0, 12, 24... pixels
+          return baseY - offset;
+        })
+        .attr('r', 6)
         .style("cursor", "pointer")
+        .style("stroke", "#000")
+        .style("stroke-width", "1px")
         .on("mouseover", function(d) {
           tooltip.html(formatTooltip(d))
             .style("visibility", "visible");
@@ -267,8 +289,16 @@ export default function(_data, _trades, _height) {
       .call(yAxis);
 
     circles
-      .attr("cx", function(d) { return x(d.date); })
-      .attr("cy", function(d) { return y(d.price); })
+      .attr("cx", function(d) { 
+        var baseX = x(d.date);
+        var offset = (d.index % 3 - 1) * 8;
+        return baseX + offset;
+      })
+      .attr("cy", function(d) { 
+        var baseY = y(d.price);
+        var offset = Math.floor(d.index / 3) * 12;
+        return baseY - offset;
+      })
 
     updateCandlesticks();
     focus.select(".axis--x").call(xAxis);
@@ -326,8 +356,16 @@ export default function(_data, _trades, _height) {
     x.domain(t.rescaleX(x2).domain());
 
     circles
-      .attr("cx", function(d) { return x(d.date); })
-      .attr("cy", function(d) { return y(d.price); })
+      .attr("cx", function(d) { 
+        var baseX = x(d.date);
+        var offset = (d.index % 3 - 1) * 8;
+        return baseX + offset;
+      })
+      .attr("cy", function(d) { 
+        var baseY = y(d.price);
+        var offset = Math.floor(d.index / 3) * 12;
+        return baseY - offset;
+      })
 
     updateCandlesticks();
     focus.select(".axis--x").call(xAxis);
