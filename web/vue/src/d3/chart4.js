@@ -4,6 +4,7 @@ import _ from 'lodash';
 export default function(_data, _trades, _height) {
 
   console.log('[Chart4] Received trades:', _trades ? _trades.length : 'null/undefined', _trades);
+  console.log('[Chart4] Received candles:', _data ? _data.length : 'null/undefined');
 
   const toDate = i => {
     if(_.isNumber(i)) {
