@@ -362,14 +362,27 @@ method.check = function() {
       if (!this.trend.adviced) {
         this.trend.adviced = true;
         
-        // Include tranche size information in the advice
-        // Note: Gekko's advice system doesn't natively support position sizing,
-        // but we log it for paper trading and future implementation
+        // Include strategy state info for chart tooltips
         this.advice({
           direction: 'short',
           trigger: {
             type: 'trailingStop',
             trailPercentage: currentPercentage
+          },
+          strategyState: {
+            trigger: 'SELL after pump plateau',
+            isInitialTrade: isFirstTrade,
+            tradePercentage: currentPercentage,
+            tradeAmount: currentTradeSize,
+            capitalUsed: this.tranches.capital_used,
+            detected_pump: this.state.detected_pump,
+            detected_dump: this.state.detected_dump,
+            in_plateau: this.state.in_plateau,
+            plateau_count: this.state.plateau_count,
+            sell_limit: this.state.sell_limit,
+            buy_limit: this.state.buy_limit,
+            plateau_high: this.state.plateau_high,
+            plateau_low: this.state.plateau_low
           }
         });
         return;
@@ -430,12 +443,27 @@ method.check = function() {
       if (!this.trend.adviced) {
         this.trend.adviced = true;
         
-        // Include tranche size information in the advice
+        // Include strategy state info for chart tooltips
         this.advice({
           direction: 'long',
           trigger: {
             type: 'trailingStop',
             trailPercentage: currentPercentage
+          },
+          strategyState: {
+            trigger: 'BUY after dump plateau',
+            isInitialTrade: isFirstTrade,
+            tradePercentage: currentPercentage,
+            tradeAmount: currentTradeSize,
+            capitalUsed: this.tranches.capital_used,
+            detected_pump: this.state.detected_pump,
+            detected_dump: this.state.detected_dump,
+            in_plateau: this.state.in_plateau,
+            plateau_count: this.state.plateau_count,
+            sell_limit: this.state.sell_limit,
+            buy_limit: this.state.buy_limit,
+            plateau_high: this.state.plateau_high,
+            plateau_low: this.state.plateau_low
           }
         });
         return;
