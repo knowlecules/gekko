@@ -70,6 +70,9 @@ BacktestResultExporter.prototype.processRoundtrip = function(roundtrip) {
 };
 
 BacktestResultExporter.prototype.processTradeCompleted = function(trade) {
+  log.info('[BacktestExporter] Trade recorded:', trade.action, '@', trade.price, 
+    '| Total trades:', this.trades.length + 1,
+    '| Has strategyState:', !!trade.strategyState);
   this.trades.push({
     ...trade,
     date: trade.date.unix()
