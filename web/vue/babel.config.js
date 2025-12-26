@@ -5,5 +5,5 @@ module.exports = {
   ignore: [
     'node_modules',
   ],
-  plugins : ["transform-commonjs-es2015-modules"]
+  plugins: ["transform-commonjs-es2015-modules"]
 }
