@@ -72,33 +72,76 @@ PaperTrader.prototype.setStartBalance = function() {
 // after every succesfull trend ride we hopefully end up
 // with more BTC than we started with, this function
 // calculates Gekko's profit in %.
-PaperTrader.prototype.updatePosition = function(what) {
+// tradeAmount: optional exact amount in currency to trade (for buy) or currency value to sell (for sell)
+PaperTrader.prototype.updatePosition = function(what, tradeAmount) {
 
   let cost;
   let amount;
 
-  // virtually trade all {currency} to {asset}
+  // virtually trade {amount} of {currency} to {asset}
   // at the current price (minus fees)
   if(what === 'long') {
-    cost = (1 - this.fee) * this.portfolio.currency;
-    this.portfolio.asset += this.extractFee(this.portfolio.currency / this.price);
-    amount = this.portfolio.asset;
-    this.portfolio.currency = 0;
+    // Use specified amount or all available currency
+    let currencyToUse;
+    if(tradeAmount && tradeAmount > 0) {
+      // Use specified amount, but cap at available currency
+      currencyToUse = Math.min(tradeAmount, this.portfolio.currency);
+    } else {
+      // No amount specified, use all available
+      currencyToUse = this.portfolio.currency;
+    }
+    
+    if(currencyToUse <= 0) {
+      log.warn('[Papertrader] No currency available to buy');
+      return { cost: 0, amount: 0, effectivePrice: this.price };
+    }
+    
+    cost = (1 - this.fee) * currencyToUse;
+    const assetBought = this.extractFee(currencyToUse / this.price);
+    this.portfolio.asset += assetBought;
+    amount = assetBought;
+    this.portfolio.currency -= currencyToUse;
 
-    this.exposed = true;
+    this.exposed = this.portfolio.asset > 0;
     this.trades++;
+    
+    log.info('[Papertrader] BUY', currencyToUse.toFixed(2), this.currency,
+      '-> Got', assetBought.toFixed(8), this.asset,
+      '@', this.price.toFixed(2),
+      '| Remaining currency:', this.portfolio.currency.toFixed(2));
   }
 
-  // virtually trade all {currency} to {asset}
+  // virtually trade {amount} worth of {asset} to {currency}
   // at the current price (minus fees)
   else if(what === 'short') {
-    cost = (1 - this.fee) * (this.portfolio.asset * this.price);
-    this.portfolio.currency += this.extractFee(this.portfolio.asset * this.price);
-    amount = this.portfolio.currency / this.price;
-    this.portfolio.asset = 0;
+    // Use specified amount (as currency value) or all available asset
+    let assetToSell;
+    if(tradeAmount && tradeAmount > 0) {
+      // Convert currency amount to asset amount, but cap at available asset
+      assetToSell = Math.min(tradeAmount / this.price, this.portfolio.asset);
+    } else {
+      // No amount specified, sell all available
+      assetToSell = this.portfolio.asset;
+    }
+    
+    if(assetToSell <= 0) {
+      log.warn('[Papertrader] No asset available to sell');
+      return { cost: 0, amount: 0, effectivePrice: this.price };
+    }
+    
+    cost = (1 - this.fee) * (assetToSell * this.price);
+    const currencyReceived = this.extractFee(assetToSell * this.price);
+    this.portfolio.currency += currencyReceived;
+    amount = currencyReceived;
+    this.portfolio.asset -= assetToSell;
 
-    this.exposed = false;
+    this.exposed = this.portfolio.asset > 0;
     this.trades++;
+    
+    log.info('[Papertrader] SELL', assetToSell.toFixed(8), this.asset,
+      '-> Got', currencyReceived.toFixed(2), this.currency,
+      '@', this.price.toFixed(2),
+      '| Remaining asset:', this.portfolio.asset.toFixed(8));
   }
 
   const effectivePrice = this.price * this.fee;
@@ -152,6 +195,12 @@ PaperTrader.prototype.processAdvice = function(advice) {
     );
   }
 
+  // Extract trade amount from strategy state (if provided)
+  // This allows strategies to specify exact position sizes
+  const tradeAmount = advice.strategyState && advice.strategyState.tradeAmount 
+    ? advice.strategyState.tradeAmount 
+    : null;
+
   this.tradeId = 'trade-' + (++this.propogatedTrades);
 
   this.deferredEmit('tradeInitiated', {
@@ -161,9 +210,10 @@ PaperTrader.prototype.processAdvice = function(advice) {
     portfolio: _.clone(this.portfolio),
     balance: this.getBalance(),
     date: advice.date,
+    tradeAmount
   });
 
-  const { cost, amount, effectivePrice } = this.updatePosition(advice.recommendation);
+  const { cost, amount, effectivePrice } = this.updatePosition(advice.recommendation, tradeAmount);
 
   this.relayPortfolioChange();
   this.relayPortfolioValueChange();
