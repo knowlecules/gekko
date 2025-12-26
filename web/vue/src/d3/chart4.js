@@ -3,6 +3,8 @@ import _ from 'lodash';
 
 export default function(_data, _trades, _height) {
 
+  console.log('[Chart4] Received trades:', _trades ? _trades.length : 'null/undefined', _trades);
+
   const toDate = i => {
     if(_.isNumber(i)) {
       return moment.unix(i).utc().toDate();
@@ -19,6 +21,8 @@ export default function(_data, _trades, _height) {
       strategyState: t.strategyState || null
     }
   });
+  
+  console.log('[Chart4] Processed trades:', trades.length, trades);
 
   const data = _data.map(c => {
     return {
