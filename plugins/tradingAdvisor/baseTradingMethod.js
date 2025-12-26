@@ -245,13 +245,26 @@ Base.prototype.advice = function(newDirection) {
   }
 
   let trigger;
+  let strategyState;
+  let allowSameDirection = false;
+  
   if(_.isObject(newDirection)) {
     if(!_.isString(newDirection.direction)) {
       log.error('Strategy emitted unparsable advice:', newDirection);
       return;
     }
 
-    if(newDirection.direction === this._currentDirection) {
+    // Preserve strategyState for paper trader to use
+    if(newDirection.strategyState) {
+      strategyState = newDirection.strategyState;
+      // Allow same direction if tradeAmount is specified (partial position sizing)
+      if(strategyState.tradeAmount && strategyState.tradeAmount > 0) {
+        allowSameDirection = true;
+      }
+    }
+
+    // Block same direction UNLESS partial position sizing is enabled
+    if(newDirection.direction === this._currentDirection && !allowSameDirection) {
       return;
     }
 
@@ -276,7 +289,8 @@ Base.prototype.advice = function(newDirection) {
     newDirection = newDirection.direction;
   }
 
-  if(newDirection === this._currentDirection) {
+  // Block same direction UNLESS partial position sizing is enabled
+  if(newDirection === this._currentDirection && !allowSameDirection) {
     return;
   }
 
@@ -292,6 +306,11 @@ Base.prototype.advice = function(newDirection) {
     id: 'advice-' + this.propogatedAdvices,
     recommendation: newDirection
   };
+
+  // Include strategyState for paper trader partial position sizing
+  if(strategyState) {
+    advice.strategyState = strategyState;
+  }
 
   if(trigger) {
     advice.trigger = trigger;
