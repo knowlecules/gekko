@@ -31,15 +31,17 @@ This fork includes custom trading strategies:
 The Plateau Seeker strategy is designed to capitalize on market stabilization periods after significant price movements:
 
 **How it works:**
-1. Detects "mini pumps" (price rises by 2.5% over 12 candles)
-2. Waits for market to plateau (stabilize for 6 candles)
+1. Detects "mini pumps" (price rises by 2.0% over 12 candles)
+2. Waits for market to plateau (stabilize for 4 candles)
 3. Sets sell limit at 90% of plateau upper boundary
-4. Detects "mini dumps" (price drops by 2% over 12 candles)
+4. Detects "mini dumps" (price drops by 1.5% over 12 candles)
 5. Waits for market to plateau
 6. Sets buy limit at 90% of plateau lower boundary
 
 **Key features:**
-- Uses tranches (10% of investment per trade) for multiple consecutive trades
+- Initial trade uses 50% of investment (configurable via initial_trade_percentage)
+- Subsequent trades use 10% each (configurable via trade_amount_percentage)
+- Maximum 6 trades total: 1 initial (50%) + 5 subsequent (10% each) = 100%
 - Avoids buying too soon or selling too late with preset limits
 - Performs well in both bull and bear markets
 - All parameters configurable in `config/strategies/plateau_seeker.toml`
@@ -88,7 +90,7 @@ node gekko.js --config config.js --backtest
 - **Trading pair**: BTC/USDT
 - **Strategy**: Plateau Seeker (default)
 - **Candle size**: 15 minutes
-- **Starting balance**: 1 BTC + 100 USDT (simulated)
+- **Starting balance**: 0 BTC + 10,000 USDT (simulated)
 
 ### 📦 Dependencies Status
 ✅ All dependencies installed including:
@@ -120,6 +122,8 @@ When started with `--ui` flag, Gekko launches a web server (port 5000 on Replit)
 - Manage multiple exchange configurations
 
 ## Recent Changes (from fork)
+- Dec 26, 2025: **Initial trade = 50% of investment** - First trade uses 50%, subsequent trades use 10% each
+- Dec 26, 2025: **Separate asset/currency balance display** - Backtest results now show "start asset balance" and "start currency balance" instead of combined "start balance"
 - Nov 18, 2025: **Added capital tracking UI fields** - Trade size per tranche and total amount traded now display in backtest results
   - NOTE: Vue dist files (web/vue/dist/app.143ff585.js) manually patched as stopgap. For proper rebuild run: `cd web/vue && npm install --legacy-peer-deps && npm run build`
 - Nov 18, 2025: Converted backtest charts to candlestick visualization using D3.js

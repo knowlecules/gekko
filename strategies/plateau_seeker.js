@@ -61,26 +61,32 @@ method.init = function() {
   };
 
   // Tranche tracking for position sizing
+  // Initial trade uses 50% of investment, remaining 50% split into 10% tranches = 5 subsequent trades
   const initialTradeSize = (this.settings.investment * this.settings.initial_trade_percentage) / 100;
   const subsequentTradeSize = (this.settings.investment * this.settings.trade_amount_percentage) / 100;
+  const remainingAfterInitial = this.settings.investment - initialTradeSize;
+  const maxSubsequentTrades = Math.floor(remainingAfterInitial / subsequentTradeSize);
   
   this.tranches = {
     total_investment: this.settings.investment,
-    initial_trade_size: initialTradeSize,  // First trade is 50% of investment
-    tranche_size: subsequentTradeSize,     // Subsequent trades are 10% each
-    is_first_trade: true,                  // Track if this is the first trade
-    long_tranches: 0,   // Number of buy tranches executed in current cycle
-    short_tranches: 0,  // Number of sell tranches executed in current cycle
-    max_tranches: Math.floor(100 / this.settings.trade_amount_percentage),
-    total_buy_tranches: 0,  // Total buys across all cycles
-    total_sell_tranches: 0  // Total sells across all cycles
+    initial_trade_size: initialTradeSize,      // First trade is 50% of investment
+    tranche_size: subsequentTradeSize,         // Subsequent trades are 10% each
+    is_first_trade: true,                      // Track if this is the first trade
+    capital_used: 0,                           // Track total capital committed
+    long_tranches: 0,                          // Number of buy tranches executed in current cycle
+    short_tranches: 0,                         // Number of sell tranches executed in current cycle
+    max_subsequent_trades: maxSubsequentTrades, // Max 5 subsequent trades (50% / 10% = 5)
+    total_buy_tranches: 0,                     // Total buys across all cycles
+    total_sell_tranches: 0,                    // Total sells across all cycles
+    total_initial_trades: 0,                   // Track initial trades executed
+    total_subsequent_trades: 0                 // Track subsequent trades executed
   };
 
   log.info('[Plateau Seeker] Tranche configuration:');
   log.info('  - Total investment:', this.tranches.total_investment);
   log.info('  - Initial trade amount:', this.tranches.initial_trade_size, '(' + this.settings.initial_trade_percentage + '% of investment)');
   log.info('  - Subsequent trade amount:', this.tranches.tranche_size, '(' + this.settings.trade_amount_percentage + '% of investment)');
-  log.info('  - Max consecutive trades per cycle:', this.tranches.max_tranches);
+  log.info('  - Max subsequent trades after initial:', this.tranches.max_subsequent_trades);
 
   // Rolling window of candles for analysis
   this.candle_history = [];
@@ -309,8 +315,11 @@ method.check = function() {
       this.state.in_plateau && 
       this.state.sell_limit > 0) {
     
-    if (currentPrice >= this.state.sell_limit && 
-        this.tranches.short_tranches < this.tranches.max_tranches) {
+    // Check if we can still trade (either first trade or have remaining subsequent capacity)
+    const canTrade = this.tranches.is_first_trade || 
+                     (this.tranches.total_subsequent_trades < this.tranches.max_subsequent_trades);
+    
+    if (currentPrice >= this.state.sell_limit && canTrade) {
       
       // Determine trade amount: first trade is 50%, subsequent are 10%
       const isFirstTrade = this.tranches.is_first_trade;
@@ -319,18 +328,27 @@ method.check = function() {
       const currentPercentage = isFirstTrade ?
         this.settings.initial_trade_percentage : this.settings.trade_amount_percentage;
       
-      this.tranches.is_first_trade = false;  // Mark first trade as complete
+      // Update capital tracking
+      this.tranches.capital_used += currentTradeSize;
+      
+      if (isFirstTrade) {
+        this.tranches.is_first_trade = false;
+        this.tranches.total_initial_trades++;
+      } else {
+        this.tranches.total_subsequent_trades++;
+      }
+      
       this.tranches.short_tranches++;
       this.tranches.total_sell_tranches++;
-      const trancheNumber = this.tranches.short_tranches;
-      const remainingCapacity = this.tranches.max_tranches - this.tranches.short_tranches;
+      const remainingCapacity = this.tranches.max_subsequent_trades - this.tranches.total_subsequent_trades;
       
-      log.warn('[Plateau Seeker] SELL signal', isFirstTrade ? '(INITIAL TRADE)' : '(tranche ' + trancheNumber + '/' + this.tranches.max_tranches + ')',
+      log.warn('[Plateau Seeker] SELL signal', isFirstTrade ? '(INITIAL TRADE - 50%)' : '(subsequent trade)',
         'at', currentPrice.toFixed(2), 
         '(limit:', this.state.sell_limit.toFixed(2), ')',
         'Amount:', currentTradeSize.toFixed(2),
         '(' + currentPercentage + '% of investment)',
-        '| Remaining capacity:', remainingCapacity, 'tranches');
+        '| Capital used:', this.tranches.capital_used.toFixed(2),
+        '| Remaining subsequent capacity:', remainingCapacity);
       
       this.state.position = 'short';
       
@@ -351,7 +369,7 @@ method.check = function() {
           direction: 'short',
           trigger: {
             type: 'trailingStop',
-            trailPercentage: this.settings.trade_amount_percentage
+            trailPercentage: currentPercentage
           }
         });
         return;
@@ -365,8 +383,11 @@ method.check = function() {
       this.state.in_plateau && 
       this.state.buy_limit > 0) {
     
-    if (currentPrice <= this.state.buy_limit && 
-        this.tranches.long_tranches < this.tranches.max_tranches) {
+    // Check if we can still trade (either first trade or have remaining subsequent capacity)
+    const canTrade = this.tranches.is_first_trade || 
+                     (this.tranches.total_subsequent_trades < this.tranches.max_subsequent_trades);
+    
+    if (currentPrice <= this.state.buy_limit && canTrade) {
       
       // Determine trade amount: first trade is 50%, subsequent are 10%
       const isFirstTrade = this.tranches.is_first_trade;
@@ -375,18 +396,27 @@ method.check = function() {
       const currentPercentage = isFirstTrade ?
         this.settings.initial_trade_percentage : this.settings.trade_amount_percentage;
       
-      this.tranches.is_first_trade = false;  // Mark first trade as complete
+      // Update capital tracking
+      this.tranches.capital_used += currentTradeSize;
+      
+      if (isFirstTrade) {
+        this.tranches.is_first_trade = false;
+        this.tranches.total_initial_trades++;
+      } else {
+        this.tranches.total_subsequent_trades++;
+      }
+      
       this.tranches.long_tranches++;
       this.tranches.total_buy_tranches++;
-      const trancheNumber = this.tranches.long_tranches;
-      const remainingCapacity = this.tranches.max_tranches - this.tranches.long_tranches;
+      const remainingCapacity = this.tranches.max_subsequent_trades - this.tranches.total_subsequent_trades;
       
-      log.warn('[Plateau Seeker] BUY signal', isFirstTrade ? '(INITIAL TRADE)' : '(tranche ' + trancheNumber + '/' + this.tranches.max_tranches + ')',
+      log.warn('[Plateau Seeker] BUY signal', isFirstTrade ? '(INITIAL TRADE - 50%)' : '(subsequent trade)',
         'at', currentPrice.toFixed(2), 
         '(limit:', this.state.buy_limit.toFixed(2), ')',
         'Amount:', currentTradeSize.toFixed(2),
         '(' + currentPercentage + '% of investment)',
-        '| Remaining capacity:', remainingCapacity, 'tranches');
+        '| Capital used:', this.tranches.capital_used.toFixed(2),
+        '| Remaining subsequent capacity:', remainingCapacity);
       
       this.state.position = 'long';
       
@@ -405,7 +435,7 @@ method.check = function() {
           direction: 'long',
           trigger: {
             type: 'trailingStop',
-            trailPercentage: this.settings.trade_amount_percentage
+            trailPercentage: currentPercentage
           }
         });
         return;
@@ -421,7 +451,7 @@ method.log = function() {
   if (this.candle_history.length === 0) return;
 
   const currentPrice = this.candle_history[this.candle_history.length - 1].close;
-  const currentCycleTranches = this.tranches.long_tranches + this.tranches.short_tranches;
+  const totalTrades = this.tranches.total_initial_trades + this.tranches.total_subsequent_trades;
   
   log.debug('[Plateau Seeker] Price:', currentPrice.toFixed(2),
     '| Pump:', this.state.detected_pump,
@@ -430,16 +460,13 @@ method.log = function() {
     '| Count:', this.state.plateau_count,
     '| Sell@:', this.state.sell_limit.toFixed(2),
     '| Buy@:', this.state.buy_limit.toFixed(2),
-    '| Cycle tranches:', currentCycleTranches + '/' + this.tranches.max_tranches);
+    '| Capital used:', this.tranches.capital_used.toFixed(2),
+    '| Total trades:', totalTrades);
 };
 
 // End of backtest summary
 method.end = function() {
   const totalTrades = this.tranches.total_buy_tranches + this.tranches.total_sell_tranches;
-  // Calculate total traded accounting for initial trade being larger
-  const initialTradeAmount = totalTrades > 0 ? this.tranches.initial_trade_size : 0;
-  const subsequentTrades = Math.max(0, totalTrades - 1);
-  const totalTraded = initialTradeAmount + (subsequentTrades * this.tranches.tranche_size);
   
   log.info('[Plateau Seeker] ========== BACKTEST SUMMARY ==========');
   log.info('  - Total Investment:', this.tranches.total_investment.toFixed(2));
@@ -447,10 +474,13 @@ method.end = function() {
     '(' + this.settings.initial_trade_percentage + '% of investment)');
   log.info('  - Subsequent Trade Size:', this.tranches.tranche_size.toFixed(2),
     '(' + this.settings.trade_amount_percentage + '% of investment)');
-  log.info('  - Total Tranches Executed:', totalTrades, 
+  log.info('  - Max Subsequent Trades:', this.tranches.max_subsequent_trades);
+  log.info('  - Initial Trades Executed:', this.tranches.total_initial_trades);
+  log.info('  - Subsequent Trades Executed:', this.tranches.total_subsequent_trades);
+  log.info('  - Total Trades:', totalTrades, 
     '(Buys:', this.tranches.total_buy_tranches, '| Sells:', this.tranches.total_sell_tranches + ')');
-  log.info('  - Total Amount Traded:', totalTraded.toFixed(2));
-  log.info('  - Current Cycle - Buys:', this.tranches.long_tranches, '| Sells:', this.tranches.short_tranches);
+  log.info('  - Total Capital Used:', this.tranches.capital_used.toFixed(2),
+    '(' + ((this.tranches.capital_used / this.tranches.total_investment) * 100).toFixed(1) + '% of investment)');
   log.info('[Plateau Seeker] =======================================');
 };
 
