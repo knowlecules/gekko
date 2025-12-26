@@ -27,5 +27,11 @@ module.exports = function *() {
 
   _.merge(config, base, req);
 
-  this.body = yield pipelineRunner(mode, config);
+  var result = yield pipelineRunner(mode, config);
+  
+  // Debug: log trades count
+  console.log('[Backtest API] Result trades count:', result && result.trades ? result.trades.length : 'no trades array');
+  console.log('[Backtest API] Result roundtrips count:', result && result.roundtrips ? result.roundtrips.length : 'no roundtrips array');
+  
+  this.body = result;
 }
