@@ -15,7 +15,8 @@ export default function(_data, _trades, _height) {
     return {
       price: t.price,
       date: toDate(t.date),
-      action: t.action
+      action: t.action,
+      strategyState: t.strategyState || null
     }
   });
 
@@ -157,6 +158,46 @@ export default function(_data, _trades, _height) {
       .attr("transform", "translate(0," + height2 + ")")
       .call(xAxis2);
 
+  // Create tooltip div
+  var tooltip = d3.select("body").append("div")
+    .attr("class", "chart-tooltip")
+    .style("position", "absolute")
+    .style("visibility", "hidden")
+    .style("background-color", "rgba(0, 0, 0, 0.85)")
+    .style("color", "#fff")
+    .style("padding", "10px")
+    .style("border-radius", "4px")
+    .style("font-size", "12px")
+    .style("max-width", "300px")
+    .style("z-index", "1000")
+    .style("pointer-events", "none");
+
+  // Format tooltip content from strategy state
+  function formatTooltip(d) {
+    var content = '<strong>' + d.action.toUpperCase() + '</strong><br>';
+    content += 'Price: ' + d.price.toFixed(2) + '<br>';
+    content += 'Date: ' + moment(d.date).format('YYYY-MM-DD HH:mm') + '<br>';
+    
+    if (d.strategyState) {
+      var s = d.strategyState;
+      content += '<hr style="margin: 5px 0; border-color: #666">';
+      content += '<strong>Trigger:</strong> ' + s.trigger + '<br>';
+      content += '<strong>Trade:</strong> ' + (s.isInitialTrade ? 'INITIAL (50%)' : 'Subsequent (' + s.tradePercentage + '%)') + '<br>';
+      content += '<strong>Amount:</strong> ' + s.tradeAmount.toFixed(2) + '<br>';
+      content += '<strong>Capital Used:</strong> ' + s.capitalUsed.toFixed(2) + '<br>';
+      content += '<hr style="margin: 5px 0; border-color: #666">';
+      content += '<strong>State at trigger:</strong><br>';
+      content += '&nbsp;&nbsp;Pump detected: ' + s.detected_pump + '<br>';
+      content += '&nbsp;&nbsp;Dump detected: ' + s.detected_dump + '<br>';
+      content += '&nbsp;&nbsp;In plateau: ' + s.in_plateau + '<br>';
+      content += '&nbsp;&nbsp;Plateau count: ' + s.plateau_count + '<br>';
+      if (s.sell_limit > 0) content += '&nbsp;&nbsp;Sell limit: ' + s.sell_limit.toFixed(2) + '<br>';
+      if (s.buy_limit > 0) content += '&nbsp;&nbsp;Buy limit: ' + s.buy_limit.toFixed(2) + '<br>';
+      if (s.plateau_high > 0) content += '&nbsp;&nbsp;Plateau range: ' + s.plateau_low.toFixed(2) + ' - ' + s.plateau_high.toFixed(2);
+    }
+    return content;
+  }
+
   var circles = svg
     .append('g')
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
@@ -166,7 +207,19 @@ export default function(_data, _trades, _height) {
         .attr('class', function(d) { return d.action })
         .attr("cx", function(d) { return x(d.date); })
         .attr("cy", function(d) { return y(d.price); })
-        .attr('r', 5);
+        .attr('r', 5)
+        .style("cursor", "pointer")
+        .on("mouseover", function(d) {
+          tooltip.html(formatTooltip(d))
+            .style("visibility", "visible");
+        })
+        .on("mousemove", function() {
+          tooltip.style("top", (d3.event.pageY - 10) + "px")
+            .style("left", (d3.event.pageX + 10) + "px");
+        })
+        .on("mouseout", function() {
+          tooltip.style("visibility", "hidden");
+        });
 
   var brushCircles = context
     .append('g')
