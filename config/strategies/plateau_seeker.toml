@@ -9,8 +9,12 @@
 # Total investment amount (used for calculating trade amounts)
 investment = 10000
 
-# Percentage of investment to use per trade (allows for multiple trades)
-# Default: 10% allows for 10 consecutive trades in the same direction
+# Percentage of investment for the INITIAL trade (first trade is larger)
+# Default: 50% - first trade uses half of the investment
+initial_trade_percentage = 50
+
+# Percentage of investment to use per SUBSEQUENT trade (after the initial)
+# Default: 10% allows for 5 more consecutive trades after the initial 50%
 trade_amount_percentage = 10
 
 # Number of candles that must show stability to confirm a plateau

@@ -14,8 +14,11 @@
       th sharpe ratio
       td {{ round2(report.sharpe) }}
     tr
-      th start balance
-      td {{ round(report.startBalance) }} {{ report.currency }}
+      th start asset balance
+      td {{ round(report.startAssetBalance) }} {{ report.asset }}
+    tr
+      th start currency balance
+      td {{ round(report.startCurrencyBalance) }} {{ report.currency }}
     tr
       th final balance
       td {{ round(report.balance) }} {{ report.currency }}

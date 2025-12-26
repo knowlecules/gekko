@@ -223,6 +223,8 @@ PerformanceAnalyzer.prototype.calculateReportStatistics = function() {
     endPrice: this.endPrice,
     trades: this.trades,
     startBalance: this.start.balance,
+    startAssetBalance: this.start.portfolio ? this.start.portfolio.asset : 0,
+    startCurrencyBalance: this.start.portfolio ? this.start.portfolio.currency : 0,
     exposure: percentExposure,
     sharpe,
     downside,
